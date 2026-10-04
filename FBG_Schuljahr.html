@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>FBG Schuljahr – Konten und Verteiler v4.64</title>
+<title>FBG Schuljahr – Konten und Verteiler v4.65</title>
 <style>
 
   :root{
@@ -439,7 +439,7 @@ th.sortbar:hover{color:var(--accent)}
 <body>
 <header><div class="headwrap">
   <div style="flex:1;min-width:260px">
-    <h1>FBG Schuljahr <span class="vers">v4.64</span></h1>
+    <h1>FBG Schuljahr <span class="vers">v4.65</span></h1>
     <p>Konten, Verteiler und Importdateien für den Schuljahreswechsel. Alles läuft lokal, ohne Internetverbindung.</p>
   </div>
   <div class="suchbox">
@@ -4546,7 +4546,7 @@ const SCHRITTE=[
   warum:'<p>Nach dem Sommer ist nicht Schluss. Wiederholer, nicht bestandene Nachprüfungen, Zuzüge und Abgänge ändern die Lage noch wochenlang. Dieser Schritt ersetzt das mühsame Nachpflegen von Hand.</p>'
        +'<p>Er läuft in zwei Teilen: Ein Leseskript holt den Ist-Zustand aus MS365 und Exchange in eine Datei – wer existiert, welche Kennung er trägt, in welchem Klassenverteiler er steckt. Diese Datei ladet ihr zusammen mit dem <b>vollständigen</b> SchilD-Export ins Werkzeug, das daraus die Unterschiede rechnet.</p>'
        +'<p>Voraussetzung ist, dass die SchilD-Kennung bei den Konten hinterlegt ist. Nur dadurch werden Personen sicher wiedererkannt, auch wenn sich Name oder Adresse geändert haben. Konten ohne Kennung tauchen bei den Abgängen nie auf – Lehrkräfte sind dadurch automatisch geschützt.</p>'
-       +'<p><b>Was in den Klassenverteilern geprüft wird:</b> Steht jedes Kind im Verteiler seiner Klasse? Steckt es zusätzlich noch in einem falschen? Stehen Abgänge noch drin? Und wer steht drin, ohne Kind oder Lehrkraft zu sein? Lehrkräfte gehören als Klassenleitung hinein und werden nie gemeldet. Erkannt werden sie an der Position im Konto (Lehrkraft, Referendar) oder an der Lehrerliste der Karte Klassenleitungen.</p>'
+       +'<p><b>Was in den Klassenverteilern geprüft wird:</b> Steht jedes Kind im Verteiler seiner Klasse? Steckt es zusätzlich noch in einem falschen? Stehen Abgänge noch drin? Und wer steht drin, ohne Kind oder Lehrkraft zu sein? Lehrkräfte gehören als Klassenleitung hinein und werden nie gemeldet. Erkannt werden sie vor allem daran, dass sie im Kollegiumsverteiler stehen – Fenster 2 liest ihn mit. Daneben zählen die Position im Konto (Lehrkraft, Referendar) und die Lehrerliste der Karte Klassenleitungen.</p>'
        +'<p>Kinder in falschen Verteilern und Abgänge sind im Korrekturskript vorausgewählt – ein Fehler ist mit einem Handgriff zurückgenommen. Unbekannte Mitglieder sind nie vorausgewählt.</p>'
        +'<p>Abgänge verlieren nur ihre Verteiler, das Konto wird nie abgeschaltet. Ein Konto zu deaktivieren ist eine Entscheidung mit Folgen und bleibt bei euch.</p>'
        +'<p>Die Startseite erinnert vier Wochen nach dem Versetzen der Verteiler an diesen Schritt und zeigt, wann er zuletzt lief.</p>'
@@ -7002,6 +7002,7 @@ function abgleichStart(){
       const r=new FileReader(); r.onload=()=>{ $(t).value=String(r.result); }; r.readAsText(d); };
   });
   const b=$('bestBefehl');
+  if(b && b.dataset.fertig){ const vc=$('vertCode'); if(vc) vc.textContent=bestandBefehlExchange(); }
   if(b && !b.dataset.fertig){
     b.innerHTML=
       '<div style="font-weight:650;font-size:13.5px;margin:4px 0 2px">Fenster 1 – Konten über Graph</div>'
@@ -7080,6 +7081,27 @@ function bestandBefehlExchange(){
  '    if($a){ [pscustomobject]@{ Adresse = $a; Verteiler = $kl; Name = "$($m.DisplayName)" } }',
  '  }',
  '}',
+ '',
+ '# Kollegiumsverteiler mitlesen: daran erkennt das Werkzeug die Lehrkraefte.',
+ '# Enthaltene Gruppen werden eine Ebene tief aufgeloest.',
+ '$Kollegium = '+"'"+String((($('verteiler')||{}).value||'kollegium@fbg.schwerte.de').trim()).replace(/'/g,"''")+"'",
+ '$lehr = @()',
+ 'if($Kollegium){',
+ '  $kg = Get-DistributionGroup -ResultSize Unlimited -ErrorAction SilentlyContinue | Where-Object { $_.PrimarySmtpAddress -eq $Kollegium } | Select-Object -First 1',
+ '  if($kg){',
+ '    foreach($m in @(Get-DistributionGroupMember -Identity $kg.PrimarySmtpAddress -ResultSize Unlimited -ErrorAction SilentlyContinue)){',
+ '      if("$($m.RecipientType)" -like "*Group*"){',
+ '        foreach($u in @(Get-DistributionGroupMember -Identity "$($m.PrimarySmtpAddress)" -ResultSize Unlimited -ErrorAction SilentlyContinue)){',
+ '          if("$($u.PrimarySmtpAddress)"){ $lehr += [pscustomobject]@{ Adresse = "$($u.PrimarySmtpAddress)"; Verteiler = "#Kollegium"; Name = "$($u.DisplayName)" } }',
+ '        }',
+ '      } elseif("$($m.PrimarySmtpAddress)"){',
+ '        $lehr += [pscustomobject]@{ Adresse = "$($m.PrimarySmtpAddress)"; Verteiler = "#Kollegium"; Name = "$($m.DisplayName)" }',
+ '      }',
+ '    }',
+ '    Write-Host ("  {0} Lehrkraefte im Kollegiumsverteiler" -f $lehr.Count)',
+ '  } else { Write-Host ("  ! Kollegiumsverteiler {0} nicht gefunden - Lehrkraefte werden dann nur ueber die Position erkannt" -f $Kollegium) -ForegroundColor Yellow }',
+ '}',
+ '$zeilen = @($zeilen) + $lehr',
  'Write-Host ("  {0} Zeilen" -f @($zeilen).Count)',
  '',
  '$ziel = "$env:USERPROFILE\\Desktop\\MS365_Verteiler.csv"',
@@ -7146,19 +7168,21 @@ function abgLiesBestand(text){
 /* ---------- Verteilerdatei lesen ----------
    nach:    Adresse (klein) -> Liste der Verteiler
    gruppen: Verteiler (klein) -> {name, mitglieder:[{adresse,name}]}
+   kollegium: Adressen aus dem Kollegiumsverteiler (Zeilen mit Verteiler #Kollegium)
    Leere Verteiler stehen mit leerer Adresse in der Datei. */
 function abgLiesVerteiler(text){
-  const nach={}, gruppen={};
+  const nach={}, gruppen={}, kollegium={};
   const zeilen=String(text||'').split(/\r?\n/).filter(z=>z.trim());
-  if(!zeilen.length) return {nach, gruppen};
+  if(!zeilen.length) return {nach, gruppen, kollegium};
   const tr=detectDelim(text);
   const kopf=splitLine(zeilen[0],tr).map(h=>String(h).replace(/^"|"$/g,'').trim().toLowerCase());
   const iA=kopf.indexOf('adresse'), iV=kopf.indexOf('verteiler'), iN=kopf.indexOf('name');
-  if(iA<0||iV<0) return {nach, gruppen};
+  if(iA<0||iV<0) return {nach, gruppen, kollegium};
   for(let z=1;z<zeilen.length;z++){
     const c=splitLine(zeilen[z],tr).map(x=>String(x==null?'':x).replace(/^"|"$/g,'').trim());
     const a=(c[iA]||'').toLowerCase(), v=c[iV]||'';
     if(!v) continue;
+    if(v==='#Kollegium'){ if(a) kollegium[a]=true; continue; }
     const g=v.toLowerCase();
     if(!gruppen[g]) gruppen[g]={name:v, mitglieder:[]};
     if(!a) continue;
@@ -7166,15 +7190,18 @@ function abgLiesVerteiler(text){
     if(!nach[a]) nach[a]=[];
     if(nach[a].indexOf(v)<0) nach[a].push(v);
   }
-  return {nach, gruppen};
+  return {nach, gruppen, kollegium};
 }
 
 /* Lehrkräfte gehören als Klassenleitung in die Verteiler und werden nie gemeldet.
-   Erkannt an der Position im Konto oder an der Lehrerliste der Karte Klassenleitungen. */
-function abgIstLehrkraft(konto, adresse){
+   Erkannt vor allem am Kollegiumsverteiler (Fenster 2), daneben an der Position im Konto
+   oder an der Lehrerliste der Karte Klassenleitungen. Die Position allein reicht nicht:
+   ältere Lehrerkonten haben dort nichts stehen. */
+function abgIstLehrkraft(konto, adresse, kollegium){
+  const adr=[adresse, konto&&konto.upn, konto&&konto.mail].map(x=>String(x||'').toLowerCase()).filter(Boolean);
+  if(kollegium && adr.some(a=>kollegium[a])) return true;
   if(konto && /lehr|referend/i.test(konto.position||'')) return true;
   const alle=(typeof LEIT!=='undefined' && LEIT.lehrer && LEIT.lehrer.alle) || [];
-  const adr=[adresse, konto&&konto.upn, konto&&konto.mail].map(x=>String(x||'').toLowerCase()).filter(Boolean);
   return alle.some(x=>adr.indexOf(String(x).toLowerCase())>=0);
 }
 
@@ -7182,7 +7209,8 @@ function abgIstLehrkraft(konto, adresse){
    bestand: aus abgLiesBestand, vert: aus abgLiesVerteiler, rows: SchilD-Zeilen aus parseInput */
 function abgKern(bestand, vert, rows, domain, ausnahmen){
   ausnahmen=ausnahmen||{};
-  vert=vert||{nach:{}, gruppen:{}};
+  vert=vert||{nach:{}, gruppen:{}, kollegium:{}};
+  vert.kollegium=vert.kollegium||{};
   const nachKennung={}, nachAdr={};
   bestand.forEach(b=>{
     const adr=[b.upn,b.mail].map(x=>String(x||'').toLowerCase()).filter(Boolean);
@@ -7262,7 +7290,7 @@ function abgKern(bestand, vert, rows, domain, ausnahmen){
     g.mitglieder.forEach(m=>{
       const konto=nachAdr[m.adresse]||null;
       if(konto && (schuelerKonto.has(konto) || abgKonto.has(konto))) return;
-      if(abgIstLehrkraft(konto, m.adresse)){ st(g.name).lehr++; return; }
+      if(abgIstLehrkraft(konto, m.adresse, vert.kollegium)){ st(g.name).lehr++; return; }
       st(g.name).unklar++;
       fremd.push({adresse:m.adresse, name:(konto&&konto.anzeigename)||m.name||'', gruppe:g.name,
                   konto, position:konto?konto.position:'', kennung:konto?konto.kennung:'', an:false});
@@ -7278,7 +7306,7 @@ function abgKern(bestand, vert, rows, domain, ausnahmen){
   });
 
   return {neu, wechsel, namen, abgang, fremd, ok, ohneKennung, ohneZiel, stat:statListe,
-          hatVerteiler, gruppenBekannt, gesamt:rows.length};
+          hatVerteiler, gruppenBekannt, kollegium:Object.keys(vert.kollegium).length, gesamt:rows.length};
 }
 
 /* ---------- Abgleich starten (Knopf Vergleichen) ---------- */
@@ -7393,7 +7421,12 @@ function abgleichZeichnen(){
       +'<b>Klassenwechsel und Verteiler werden aber nicht geprüft</b>. Sonst würde jedes Kind als Wechsler gemeldet.<br>'
       +'Verbinde Exchange und lass Fenster 2 erneut laufen, dann ist der Abgleich vollständig.</div>')
     +(e.hatVerteiler && !e.gruppenBekannt?'<div class="box warn">Die Verteilerdatei stammt von einer älteren Fassung des Leseskripts. '
-      +'Die Übersicht je Klasse und die Liste der unbekannten Mitglieder fehlen deshalb. Lass Fenster 2 einmal neu laufen.</div>':'');
+      +'Die Übersicht je Klasse und die Liste der unbekannten Mitglieder fehlen deshalb. Lass Fenster 2 einmal neu laufen.</div>':'')
+    +(e.gruppenBekannt && !e.kollegium?'<div class="box warn"><b>Lehrkräfte werden nur unvollständig erkannt.</b> '
+      +'In der Verteilerdatei fehlen die Mitglieder des Kollegiumsverteilers. Ohne sie erkennt das Werkzeug Lehrkräfte nur an der Position im Konto, '
+      +'und die fehlt bei älteren Lehrerkonten. Diese landen dann bei „Unbekannt im Verteiler“. '
+      +'Abhilfe: Fenster 2 mit dem aktuellen Befehl neu laufen lassen; die Adresse des Kollegiumsverteilers steht in den Einstellungen.</div>'
+      :(e.kollegium?'<div class="hint">Lehrkräfte erkannt über den Kollegiumsverteiler ('+e.kollegium+' Adressen).</div>':''));
 
   const t=(titel, hinweis, zeilen, spalten, leer)=>
     '<details'+(zeilen.length?' open':'')+' style="margin-bottom:14px">'
@@ -7511,7 +7544,7 @@ function abgleichZeichnen(){
 
   if(e.gruppenBekannt){
     h+=t('Unbekannt im Verteiler', 'Mitglieder eines Klassenverteilers, die weder laut SchilD in diese Klasse gehören noch Lehrkraft sind. '
-        +'Lehrkräfte erkennt das Werkzeug an der Position im Konto (Lehrkraft, Referendar) oder an der Lehrerliste in der Karte Klassenleitungen. '
+        +'Lehrkräfte erkennt das Werkzeug am Kollegiumsverteiler, an der Position im Konto (Lehrkraft, Referendar) oder an der Lehrerliste in der Karte Klassenleitungen. '
         +'<b>Nichts ist vorausgewählt.</b> Hak nur an, was wirklich heraus soll.',
         e.fremd, [wahl('fremd'),
                   ['Verteiler',z=>'<b>'+esc(z.gruppe)+'</b>'],['Adresse',z=>esc(z.adresse)],['Name',z=>esc(z.name)||'<span class="muted">–</span>'],
@@ -7869,12 +7902,14 @@ function stAbgleich(){
     k('{T3}','tim.eiche','Schüler'),          /* nicht mehr in SchilD, noch in 06a */
     k('','linde','Lehrkraft'),                /* Klassenleitung in 06a */
     k('','ulme.extern',''),                   /* unbekannt in 06a */
+    k('','weide',''),                         /* Lehrkraft ohne Position, nur im Kollegiumsverteiler */
     k('{T6}','tara.weide','Schüler'),         /* Klasse ohne Verteilerregel */
     k('{T7}','theo.ahorn','Schüler',{mail:'t.ahorn@'+d})  /* Verteiler kennt nur die Mailadresse */
   ];
   const vert=abgLiesVerteiler(['Adresse;Verteiler;Name',
     'tom.ahorn@'+d+';05a;','tina.birke@'+d+';06a;','tina.birke@'+d+';05b;','tim.eiche@'+d+';06a;',
-    'linde@'+d+';06a;','ulme.extern@'+d+';06a;Ulme','t.ahorn@'+d+';06b;',';07c;'].join('\n'));
+    'linde@'+d+';06a;','ulme.extern@'+d+';06a;Ulme','weide@'+d+';06a;','t.ahorn@'+d+';06b;',';07c;',
+    'weide@'+d+';#Kollegium;Weide'].join('\n'));
   const rows=[
     {guid:'{T1}',vorname:'Tom',nachname:'Ahorn',klasse:'06a'},
     {guid:'{T2}',vorname:'Tina',nachname:'Birke',klasse:'06a'},
@@ -7885,6 +7920,8 @@ function stAbgleich(){
   const e=abgKern(bestand, vert, rows, d, {});
   const w=id=>e.wechsel.find(x=>x.guid===id);
   stAdd('Klassenabgleich','Leerer Verteiler wird erkannt', !!vert.gruppen['07c']);
+  stAdd('Klassenabgleich','Kollegiumsverteiler zählt nicht als Klasse', !vert.gruppen['#kollegium'] && !!vert.kollegium['weide@'+d]);
+  stAdd('Klassenabgleich','Lehrkraft ohne Position wird über den Kollegiumsverteiler erkannt', !e.fremd.some(x=>/^weide@/.test(x.adresse)));
   stAdd('Klassenabgleich','Klassenwechsel wird gemeldet', !!w('{T1}') && w('{T1}').nach==='06a' && w('{T1}').von.join()==='05a');
   stAdd('Klassenabgleich','Zusätzlich im falschen Verteiler wird gemeldet', !!w('{T2}') && w('{T2}').drin && w('{T2}').von.join()==='05b');
   stAdd('Klassenabgleich','Mailadresse statt UPN führt nicht zu falschem Wechsel', !w('{T7}'));
@@ -7896,7 +7933,7 @@ function stAbgleich(){
   stAdd('Klassenabgleich','Kind ohne Verteilerregel wird gemeldet', e.ohneZiel.length===1 && e.ohneZiel[0].guid==='{T6}');
   const s6=e.stat.find(x=>x.name==='06a')||{};
   stAdd('Klassenabgleich','Übersicht je Klasse zählt richtig',
-    s6.schild===3 && s6.fehlt===1 && s6.ohneKonto===1 && s6.lehr===1 && s6.unklar===1 && s6.zuviel===1 && s6.zustand==='abweichung',
+    s6.schild===3 && s6.fehlt===1 && s6.ohneKonto===1 && s6.lehr===2 && s6.unklar===1 && s6.zuviel===1 && s6.zustand==='abweichung',
     JSON.stringify(s6));
   const aAlt=ABG.erg;
   try{

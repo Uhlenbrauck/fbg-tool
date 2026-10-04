@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>FBG Schuljahr – Konten und Verteiler v4.61</title>
+<title>FBG Schuljahr – Konten und Verteiler v4.62</title>
 <style>
 
   :root{
@@ -439,7 +439,7 @@ th.sortbar:hover{color:var(--accent)}
 <body>
 <header><div class="headwrap">
   <div style="flex:1;min-width:260px">
-    <h1>FBG Schuljahr <span class="vers">v4.61</span></h1>
+    <h1>FBG Schuljahr <span class="vers">v4.62</span></h1>
     <p>Konten, Verteiler und Importdateien für den Schuljahreswechsel. Alles läuft lokal, ohne Internetverbindung.</p>
   </div>
   <div class="suchbox">
@@ -6303,12 +6303,12 @@ function leitungSkript(){
   L.push('  $grp = Get-DistributionGroup -ResultSize Unlimited -ErrorAction SilentlyContinue |');
   L.push('         Where-Object { $_.PrimarySmtpAddress -eq $mail } | Select-Object -First 1');
   L.push('  if(-not $grp){ Write-Host ("  ! Verteiler nicht gefunden: {0}" -f $mail) -ForegroundColor Yellow; $probleme++; continue }');
-  L.push('  $soll = @($Soll[$klasse] | ForEach-Object { $_.ToString().ToLower() })');
+  L.push('  $sollAdr = @($Soll[$klasse] | Where-Object { $_ } | ForEach-Object { $_.ToString().ToLower() })');
   L.push('  $ist  = @(Get-DistributionGroupMember -Identity $grp.PrimarySmtpAddress -ResultSize Unlimited -ErrorAction SilentlyContinue)');
   L.push('  $istAdr = @($ist | ForEach-Object { $_.PrimarySmtpAddress.ToString().ToLower() })');
-  L.push('  $raus = @($istAdr | Where-Object { $lehrerSet.Contains($_) -and $soll -notcontains $_ })');
-  L.push('  $rein = @($soll | Where-Object { $istAdr -notcontains $_ })');
-  L.push('  $bleibt = @($soll | Where-Object { $istAdr -contains $_ })');
+  L.push('  $raus = @($istAdr | Where-Object { $lehrerSet.Contains($_) -and $sollAdr -notcontains $_ })');
+  L.push('  $rein = @($sollAdr | Where-Object { $istAdr -notcontains $_ })');
+  L.push('  $bleibt = @($sollAdr | Where-Object { $istAdr -contains $_ })');
   L.push('  foreach($b in $bleibt){ Write-Host ("  bleibt:    {0}" -f $b) }');
   L.push('  if($raus.Count -eq 0 -and $rein.Count -eq 0){ Write-Host "  keine Aenderung noetig"; $unveraendert++; continue }');
   L.push('  foreach($r in $raus){');
@@ -7514,6 +7514,11 @@ function stSkriptPruefen(name, text, dienst){
     const kollision=schalter.filter(s=>zuweisung.indexOf(s)>=0);
     stAdd('Skripte',name+': kein Schaltername doppelt belegt', kollision.length===0, kollision.join(', '));
   }
+  /* PowerShell unterscheidet bei Variablen nicht zwischen gross und klein: $Soll und $soll sind dieselbe */
+  const schreib={};
+  [...text.matchAll(/\$([A-Za-z][A-Za-z0-9_]*)/g)].forEach(x=>{ const k=x[1].toLowerCase(); (schreib[k]=schreib[k]||new Set()).add(x[1]); });
+  const doppelt=Object.values(schreib).filter(m=>m.size>1).map(m=>[...m].join('/'));
+  stAdd('Skripte',name+': keine Variable in zwei Schreibweisen', doppelt.length===0, doppelt.join(', '));
   const hatGraph=/Connect-MgGraph/.test(text), hatExo=/Connect-ExchangeOnline/.test(text);
   stAdd('Skripte',name+': verbindet nur einen Dienst', !(hatGraph&&hatExo),
     hatGraph&&hatExo ? 'verbindet Graph und Exchange in einer Sitzung' : (hatGraph?'Graph':(hatExo?'Exchange':'keiner')));

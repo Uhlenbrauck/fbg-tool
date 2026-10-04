@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>FBG Schuljahr – Konten und Verteiler v4.62</title>
+<title>FBG Schuljahr – Konten und Verteiler v4.63</title>
 <style>
 
   :root{
@@ -439,7 +439,7 @@ th.sortbar:hover{color:var(--accent)}
 <body>
 <header><div class="headwrap">
   <div style="flex:1;min-width:260px">
-    <h1>FBG Schuljahr <span class="vers">v4.62</span></h1>
+    <h1>FBG Schuljahr <span class="vers">v4.63</span></h1>
     <p>Konten, Verteiler und Importdateien für den Schuljahreswechsel. Alles läuft lokal, ohne Internetverbindung.</p>
   </div>
   <div class="suchbox">
@@ -1130,7 +1130,9 @@ Die Grundeinstellungen dazu stehen im Reiter Einstellungen.</p>
           <input type="file" id="lkDatei" accept=".txt,.csv" style="display:none">
         </div>
         <div class="hint" style="margin-top:6px">Dieselbe Liste wie beim Lehrkräfte-Import: GUID, Nachname, Vorname, Kürzel.
-          Daraus entstehen die Adressen und die Liste, aus der überhaupt entfernt werden darf.</div>
+          Daraus entstehen die Adressen und die Liste, aus der überhaupt entfernt werden darf.
+          Weicht eine Adresse ab, etwa nach einer Namensänderung, drück in der Tabelle bei dem Kürzel auf <b>ändern</b>.
+          Das Tool merkt sich die Adresse im gemeinsamen Ordner.</div>
       </div>
     </div>
     <div class="flexbtns" style="margin-top:14px">
@@ -6123,6 +6125,18 @@ function leitungSetzeKuerzel(kz, wert){
   else { if(v.indexOf('@')<0) v=v+'@'+dom; STAND.kuerzel[kz]=v.toLowerCase(); }
   standSichern(); leitungZeichnen();
 }
+/* Adresse eines bekannten Kuerzels von Hand ueberschreiben, z. B. nach einer Namensaenderung */
+function leitungAendern(knopf, kz){
+  const zeile=knopf.parentNode;
+  zeile.innerHTML='<b>'+esc(kz)+'</b> → <input type="text" placeholder="vorname.nachname" style="max-width:230px">'
+    +' <button class="btn sec sm">übernehmen</button>';
+  const feld=zeile.querySelector('input');
+  feld.value=leitungAdresse(kz)||'';
+  feld.focus(); feld.select();
+  const los=()=>leitungSetzeKuerzel(kz, feld.value);
+  zeile.querySelector('button').onclick=los;
+  feld.onkeydown=e=>{ if(e.key==='Enter') los(); if(e.key==='Escape') leitungZeichnen(); };
+}
 /* Zusatzadressen fuer die Oberstufenverteiler */
 function leitungZusatz(){
   const dom=($('emailDomain')&&$('emailDomain').value.trim())||'fbg.schwerte.de';
@@ -6166,7 +6180,14 @@ function leitungZeichnen(){
   LEIT.klassen.forEach(e=>{
     const zellen=e.kuerzel.map(kz=>{
       const a=leitungAdresse(kz);
-      if(a) return '<div><b>'+esc(kz)+'</b> → '+esc(a)+'</div>';
+      if(a){
+        const hand=!!(STAND.kuerzel && STAND.kuerzel[kz]);
+        return '<div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin:2px 0"><b>'+esc(kz)+'</b> → '+esc(a)
+          +(hand?' <span class="muted">(von Hand)</span>':'')
+          +' <button class="btn sec sm" onclick="leitungAendern(this,\''+esc(kz)+'\')">ändern</button>'
+          +(hand?' <button class="btn sec sm" title="wieder die Adresse aus der Lehrerliste nehmen" onclick="leitungSetzeKuerzel(\''+esc(kz)+'\',\'\')">zurücksetzen</button>':'')
+          +'</div>';
+      }
       return '<div style="display:flex;gap:7px;align-items:center;margin:2px 0">'
         +'<b style="color:var(--err)">'+esc(kz)+'</b> <span class="muted">nicht gefunden →</span>'
         +'<input type="text" placeholder="vorname.nachname" style="max-width:230px" '
@@ -6281,7 +6302,8 @@ function leitungSkript(){
   L.push('');
   L.push('# Alle bekannten Lehrkraftadressen - nur diese darf das Skript entfernen');
   L.push('$LehrerAlle = @(');
-  const alle=(LEIT.lehrer.alle||[]).slice().sort();
+  /* von Hand zugeordnete Adressen sind ebenfalls Lehrkraefte und duerfen entfernt werden */
+  const alle=[...new Set((LEIT.lehrer.alle||[]).concat(Object.values(STAND.kuerzel||{})).map(x=>String(x).toLowerCase()))].sort();
   for(let i=0;i<alle.length;i+=4){ L.push('  '+alle.slice(i,i+4).map(qq).join(',')+(i+4<alle.length?',':'')); }
   L.push(')');
   L.push('');

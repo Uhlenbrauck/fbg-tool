@@ -20,12 +20,12 @@ Diese Datei liest Claude zu Beginn jeder Sitzung automatisch. Sie ersetzt den la
 ## Technik
 
 - Eine einzige Datei `FBG_Schuljahr.html`, Vanilla JS, kein Build, keine externen Bibliotheken. Chrome/Edge (File System Access API).
-- Stand: Objekt `STAND`, gespeichert in `FBG_Schuljahr_Stand.json` + localStorage. Neue Schlüssel an **allen drei** Stellen mit Vorgabewert anlegen (z. B. `praktika:{}`, `vorlagen:[]`).
+- Stand: Objekt `STAND`, gespeichert in `FBG_Schuljahr_Stand.json` + localStorage. Neue Schlüssel an **allen drei** Stellen mit Vorgabewert anlegen (z. B. `praktika:{}`, `vorlagen:[]`, `abgleich:{}`).
 - Modi: `state.mode` = `schueler` | `lehrer` | `praktikum`.
 - Abläufe: `VORGAENGE` (art `jahr`/`laufend`) mit `SCHRITTE` {id, titel, reiter, ort, dauer, zweck, anleitung[], warum}. Daraus werden Reiter 0 „Abläufe und Anleitungen“, das Handbuch und die Suche erzeugt.
 - Suche: `suchIndex()`, `suchLauf()`. Briefvorlagen: `VORLAGEN_STD`, Platzhalter über `briefFelder()`; Datum immer TT.MM.JJJJ (`datumDe`).
 - Download: nur eine Funktion `download()` → `speichereDatei(..., true)` = Downloads.
-- Nach jeder Änderung: Version im `<title>` und `<h1>` erhöhen (aktuell v4.63), Selbsttest (Einstellungen → Selbsttest) muss grün bleiben (74/74). Testen z. B. mit Node + jsdom: `selbsttest(false)`.
+- Nach jeder Änderung: Version im `<title>` und `<h1>` erhöhen (aktuell v4.64), Selbsttest (Einstellungen → Selbsttest) muss grün bleiben (84/84). Testen z. B. mit Node + jsdom oder Playwright (Chromium unter `/opt/pw-browsers/chromium`): `selbsttest(false)`.
 - PowerShell-Variablen sind nicht case-sensitiv: `$Soll` und `$soll` sind dieselbe Variable. Selbsttest prüft das. Erzeugte Skripte lassen sich lokal mit pwsh und Stub-Funktionen für die Exchange-Cmdlets testen.
 - Achtung bei Ersetzungen: `</style>` kommt mehrfach vor (auch in erzeugten Handbuch-/Brief-Strings).
 
@@ -37,12 +37,20 @@ Diese Datei liest Claude zu Beginn jeder Sitzung automatisch. Sie ersetzt den la
 - **Jamf School**: Benutzerimport ersetzt Gruppen; Schlüssel = Username. Gruppen ≠ Klassen (Migration manuell, erneute Migration schadet nicht). TeacherGroups-CSV ist gruppenorientiert: `TeacherGroup;UserNames` (eine Gruppe pro Zeile, Namen mit Komma). Lehrernamen aus dem Jamf-Lehrerexport nehmen, nicht nach Regel bilden. Sek I = Jahrgang 05–10.
 - **Ibiza-EP-Export**: 7er-Blöcke ab Spalte 7 (Fach, Fach kurz, Kurszeichen, Kürzel, Kursnummer, Block, Fach/Art/Block). Gruppenname `EP_<FachKurz>_<Rest>`, z. B. `EP_D_GK8`. Ignorierte Kurse: Einstellung `kursIgnore`.
 - **WebUntis**: Import unter Administration → Benutzer → Benutzerverwaltung → Import. Schlüssel = Benutzername (Fremdbenutzername ist KEIN Schlüssel). Benutzernamen ca. vorname.nachname. Schüler und Praktikanten melden sich per MS365-SSO an (Feld „Office 365 Identität“). Schüler-Stammdatenbericht liefert `externKey` = SchILD-ID.
+- **Klassenabgleich** (Reiter 3, vereinbart 04.10.2026): prüft SchILD-Klassen gegen die Klassenverteiler 05a–10e **und** EP/Q1/Q2. Kern ist `abgKern()` (ohne Oberfläche, im Selbsttest geprüft).
+  - In Klassenverteiler gehören nur Kinder der Klasse und Lehrkräfte (Klassenleitungen). Lehrkraft = Position enthält „Lehr“/„Referend“ oder steht in der Lehrerliste der Karte Klassenleitungen. Lehrkräfte werden nie gemeldet.
+  - Abgänge werden aus ihren Klassenverteilern entfernt (vorausgewählt, Fehler sind leicht zu beheben). Das Konto bleibt immer unberührt.
+  - Kinder in falschen Verteilern (Wechsel oder zusätzlich drin) sind vorausgewählt. Unbekannte Mitglieder werden nur gezeigt, nie vorausgewählt.
+  - Alles Angehakte geht in **ein** Korrekturskript `6_Klassenwechsel.ps1`. Es ändert nur Verteiler.
+  - Fenster 1 liest zusätzlich `Mail` (Verteiler liefern die Mailadresse, nicht den UPN). Fenster 2 schreibt auch leere Verteiler (Zeile mit leerer Adresse) und die Spalte `Name`.
+  - Die Startseite erinnert 4 Wochen nach dem Haken bei „Verteiler versetzen“, Datum der letzten Prüfung in `STAND.abgleich`.
 - **WLAN**: persönlich `FBG` (RADIUS, IServ-Zugang), Geräte `GeräteFBG` (festes Passwort, Einstellung `wlanPasswort`).
 
 ## Offene Punkte (Stand 04.10.2026)
 
-- Anleitungen (`anleitung[]`) für die übrigen Vorgänge schreiben: Schuljahreswechsel, Oberstufenkurse, neue Schüler, neue Lehrkraft, Klassenwechsel, Abgleich. Entwurf vorlegen, Kai korrigiert.
-- Abgleich auf Jamf/IServ erweitern + Korrekturdateien; passwortfreie IServ-Standdatei; Merge-Skript in den Werkzeugkasten.
+- Anleitungen (`anleitung[]`) für die übrigen Vorgänge schreiben: Schuljahreswechsel, Oberstufenkurse, neue Schüler, neue Lehrkraft. Entwurf vorlegen, Kai korrigiert.
+- Entwurf der Anleitung zum Schritt „Änderungen abgleichen“ (deckt Klassenwechsel und Abgleich ab) liegt seit v4.64 vor – Kai muss ihn noch korrigieren.
+- Abgleich auf Jamf/IServ erweitern + Korrekturdateien (Klassenverteiler sind seit v4.64 erledigt); passwortfreie IServ-Standdatei; Merge-Skript in den Werkzeugkasten.
 - Werkzeugkasten: alle Karten beim Start zugeklappt.
 - WebUntis-Karte: „Vorname gekürzt“ vorauswählen (Sek I wird ab nächstem Jahrgang direkt in WebUntis importiert).
 - Warnung, wenn Kursspalten leer sind; Hinweis Zeugnisdaten Schuljahr/Halbjahr; Exportvorlage sichern.

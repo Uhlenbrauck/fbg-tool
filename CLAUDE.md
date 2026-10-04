@@ -26,7 +26,7 @@ Diese Datei liest Claude zu Beginn jeder Sitzung automatisch. Sie ersetzt den la
 - Suche: `suchIndex()`, `suchLauf()`. Briefvorlagen: `VORLAGEN_STD`, Platzhalter über `briefFelder()`; Datum immer TT.MM.JJJJ (`datumDe`).
 - Download: nur eine Funktion `download()` → `speichereDatei(..., true)` = Downloads.
 - Nach jeder Änderung: Version im `<title>` und `<h1>` erhöhen (aktuell v4.64), Selbsttest (Einstellungen → Selbsttest) muss grün bleiben (84/84). Testen z. B. mit Node + jsdom oder Playwright (Chromium unter `/opt/pw-browsers/chromium`): `selbsttest(false)`.
-- PowerShell-Variablen sind nicht case-sensitiv: `$Soll` und `$soll` sind dieselbe Variable. Selbsttest prüft das. Erzeugte Skripte lassen sich lokal mit pwsh und Stub-Funktionen für die Exchange-Cmdlets testen.
+- PowerShell-Variablen sind nicht case-sensitiv: `$Soll` und `$soll` sind dieselbe Variable. Selbsttest prüft das. Erzeugte Skripte lassen sich lokal mit pwsh und Stub-Funktionen für die Exchange-Cmdlets testen. Fehlt pwsh in der Cloud-Sitzung, nachinstallieren: `mkdir -p /opt/pwsh && curl -sSL https://github.com/PowerShell/PowerShell/releases/download/v7.4.6/powershell-7.4.6-linux-x64.tar.gz | tar xz -C /opt/pwsh && chmod +x /opt/pwsh/pwsh`. Erzeugte Skripte als eigenes Skript starten (`./x.ps1`), nicht dot-sourcen, sonst überschreiben ihre Variablen die Stub-Variablen.
 - Achtung bei Ersetzungen: `</style>` kommt mehrfach vor (auch in erzeugten Handbuch-/Brief-Strings).
 
 ## Fachwissen Systeme

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>FBG Schuljahr – Konten und Verteiler v4.59</title>
+<title>FBG Schuljahr – Konten und Verteiler v4.60</title>
 <style>
 
   :root{
@@ -439,7 +439,7 @@ th.sortbar:hover{color:var(--accent)}
 <body>
 <header><div class="headwrap">
   <div style="flex:1;min-width:260px">
-    <h1>FBG Schuljahr <span class="vers">v4.59</span></h1>
+    <h1>FBG Schuljahr <span class="vers">v4.60</span></h1>
     <p>Konten, Verteiler und Importdateien für den Schuljahreswechsel. Alles läuft lokal, ohne Internetverbindung.</p>
   </div>
   <div class="suchbox">
@@ -4306,6 +4306,20 @@ const SCHRITTE=[
  {id:'leitungen', titel:'Klassenleitungen aktualisieren', reiter:2, ort:'Reiter Verteiler versetzen und PowerShell', dauer:'15 Minuten',
  
   zweck:'Bringt die Klassenlehrkräfte in den Klassenverteilern auf den Stand des neuen Schuljahres.',
+  anleitung:[
+   'Erst prüfen: Ist der Schritt <b>Verteiler versetzen</b> erledigt? Vorher nicht weitermachen.',
+   'WebUntis öffnen, <b>Stammdaten → Klassen</b>, Knopf <b>Bericht Klassenlehrkraft</b> drücken.',
+   'Die PDF öffnen, alles markieren, kopieren und in Feld 1 der Karte <b>L</b> einfügen.',
+   'In Feld 2 die Lehrerliste mit Kürzeln einfügen – dieselbe wie beim Lehrkräfte-Import.',
+   '<b>Auswerten</b> drücken.',
+   'Wenn auch die Oberstufe dran ist: Haken <b>EP, Q1 und Q2 mitpflegen</b> setzen. Feste Leitungen wie die Oberstufenkoordination ins Feld darunter eintragen.',
+   'Rote Kürzel in der Tabelle mit <code>vorname.nachname</code> ergänzen. Das Tool merkt sie sich fürs nächste Jahr.',
+   'Zuordnung prüfen, Haken setzen, <code>4_Klassenleitungen.ps1</code> herunterladen.',
+   'Ein PowerShell-Fenster öffnen, in dem keine Graph-Verbindung läuft. Den Befehl <b>1. Simulation</b> einfügen.',
+   'Die Ausgabe lesen: Stimmen <b>WUERDE entfernen</b> und <b>WUERDE aufnehmen</b>?',
+   'Dann den Befehl <b>2. Echt ausführen</b> einfügen.',
+   'Am Ende prüfen, ob <b>Probleme</b> auf 0 steht. Wenn nicht, zeigen die gelben Zeilen den Grund.'
+  ],
   warum:'<p>Die Klassenverteiler enthalten nicht nur die Kinder, sondern auch die Klassenleitung. In den Jahrgängen 5 und 6 sind das zwei Personen, ab Jahrgang 7 eine.</p>'
        +'<p>Einzige Datenquelle ist bislang der Export „Klassenlehrkräfte“ aus WebUntis. Er nennt nur Kürzel, deshalb braucht das Tool zusätzlich die Lehrerliste mit Kürzel, Vorname und Nachname – daraus bildet es die Adressen mit denselben Regeln wie überall sonst.</p>'
        +'<p><b>Erst nach dem Versetzen ausführen.</b> Vorher heißen die Gruppen noch nach dem alten Jahrgang, und der Abgleich würde in die falschen Verteiler schreiben. Danach passt es von selbst: In der Gruppe 06a steckt noch die Leitung, die sie als 05a hatte, und WebUntis nennt die neue – die Differenz ist genau das, was geändert werden muss.</p>'

@@ -24,7 +24,7 @@ Diese Datei liest Claude zu Beginn jeder Sitzung automatisch. Sie ersetzt den la
 - Abläufe: `VORGAENGE` (art `jahr`/`laufend`) mit `SCHRITTE` {id, titel, reiter, ort, dauer, zweck, anleitung[], warum}. Daraus werden Reiter 0 „Abläufe und Anleitungen“, das Handbuch und die Suche erzeugt.
 - Suche: `suchIndex()`, `suchLauf()`. Briefvorlagen: `VORLAGEN_STD`, Platzhalter über `briefFelder()`; Datum immer TT.MM.JJJJ (`datumDe`).
 - Download: nur eine Funktion `download()` → `speichereDatei(..., true)` = Downloads.
-- Nach jeder Änderung: Version im `<title>` und `<h1>` erhöhen (aktuell v4.59), Selbsttest (Einstellungen → Selbsttest) muss grün bleiben (65/65). Testen z. B. mit Node + jsdom: `selbsttest(false)`.
+- Nach jeder Änderung: Version im `<title>` und `<h1>` erhöhen (aktuell v4.60), Selbsttest (Einstellungen → Selbsttest) muss grün bleiben (65/65). Testen z. B. mit Node + jsdom: `selbsttest(false)`.
 - Achtung bei Ersetzungen: `</style>` kommt mehrfach vor (auch in erzeugten Handbuch-/Brief-Strings).
 
 ## Fachwissen Systeme

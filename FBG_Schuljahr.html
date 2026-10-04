@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>FBG Schuljahr – Konten und Verteiler v4.58</title>
+<title>FBG Schuljahr – Konten und Verteiler v4.60</title>
 <style>
 
   :root{
@@ -439,7 +439,7 @@ th.sortbar:hover{color:var(--accent)}
 <body>
 <header><div class="headwrap">
   <div style="flex:1;min-width:260px">
-    <h1>FBG Schuljahr <span class="vers">v4.58</span></h1>
+    <h1>FBG Schuljahr <span class="vers">v4.60</span></h1>
     <p>Konten, Verteiler und Importdateien für den Schuljahreswechsel. Alles läuft lokal, ohne Internetverbindung.</p>
   </div>
   <div class="suchbox">
@@ -741,6 +741,28 @@ th.sortbar:hover{color:var(--accent)}
           und bekommt ohnehin ein neues Konto – Karteileichen braucht ihr nicht.</span></li>
       </ol>
     </div>
+  </div>
+</div>
+
+<div class="card" id="klwCard">
+  <h2><span class="num">5</span> Klassenleitung wechseln <span class="muted">einzelne Klassen, mitten im Schuljahr</span></h2>
+  <div class="cardbody">
+    <p class="muted" style="margin-top:0">Für den Fall, dass eine Klassenleitung unterjährig wechselt oder eine zweite dazukommt.
+      Nimmt die bisherige Lehrkraft aus dem Klassenverteiler heraus und trägt die neue ein. Den ganzen WebUntis-Export brauchst du dafür nicht.</p>
+    <div class="field">
+      <label>Eine Zeile je Klasse: Klasse;bisher;neu</label>
+      <textarea id="klwText" placeholder="07b;Bir;Lin&#10;05a;;Eic&#10;09c;birke.anna;"></textarea>
+      <div class="hint" style="margin-top:6px">
+        <b>bisher</b> wird entfernt, <b>neu</b> wird aufgenommen. Eins von beiden darf leer bleiben: <code>05a;;Eic</code> nimmt nur jemanden auf.
+        Mehrere Personen mit Komma trennen. Du kannst ein <b>Kürzel</b> (wie in Karte L zugeordnet), <code>vorname.nachname</code> oder die volle Adresse eintragen.
+        Erlaubt sind die Klassen 05a bis 10e. Für EP, Q1 und Q2 die volle Adresse des Verteilers statt der Klasse eintragen.</div>
+    </div>
+    <div class="flexbtns" style="margin-top:12px">
+      <button class="btn" onclick="klwAuswerten()">Prüfen</button>
+    </div>
+    <div id="klwMeld"></div>
+    <div class="tablewrap" id="klwWrap" style="display:none;margin-top:10px"><table id="klwTab"></table></div>
+    <div id="klwUnten"></div>
   </div>
 </div>
 
@@ -1097,6 +1119,8 @@ Die Grundeinstellungen dazu stehen im Reiter Einstellungen.</p>
           „Klassenlehrer" und „Stellvertreter" – mehr als zwei Personen lassen sich dort nicht führen, und im
           Schülerexport steht die Klassenleitung ohnehin nicht. Mit SchILD 3 wäre die Klassenleitung eine Liste
           und könnte direkt aus SchILD kommen; bis dahin bleibt dieser Weg.</div>
+        <div class="hint" style="margin-top:8px"><b>Wechsel mitten im Schuljahr?</b> Dafür gibt es im
+          Werkzeugkasten die Karte <b>Klassenleitung wechseln</b>. Dort reicht eine Zeile je Klasse.</div>
       </div>
       <div class="field" style="flex:1;min-width:330px">
         <label>2. Lehrerliste mit Kürzeln</label>
@@ -4282,12 +4306,27 @@ const SCHRITTE=[
  {id:'leitungen', titel:'Klassenleitungen aktualisieren', reiter:2, ort:'Reiter Verteiler versetzen und PowerShell', dauer:'15 Minuten',
  
   zweck:'Bringt die Klassenlehrkräfte in den Klassenverteilern auf den Stand des neuen Schuljahres.',
+  anleitung:[
+   'Erst prüfen: Ist der Schritt <b>Verteiler versetzen</b> erledigt? Vorher nicht weitermachen.',
+   'WebUntis öffnen, <b>Stammdaten → Klassen</b>, Knopf <b>Bericht Klassenlehrkraft</b> drücken.',
+   'Die PDF öffnen, alles markieren, kopieren und in Feld 1 der Karte <b>L</b> einfügen.',
+   'In Feld 2 die Lehrerliste mit Kürzeln einfügen – dieselbe wie beim Lehrkräfte-Import.',
+   '<b>Auswerten</b> drücken.',
+   'Wenn auch die Oberstufe dran ist: Haken <b>EP, Q1 und Q2 mitpflegen</b> setzen. Feste Leitungen wie die Oberstufenkoordination ins Feld darunter eintragen.',
+   'Rote Kürzel in der Tabelle mit <code>vorname.nachname</code> ergänzen. Das Tool merkt sie sich fürs nächste Jahr.',
+   'Zuordnung prüfen, Haken setzen, <code>4_Klassenleitungen.ps1</code> herunterladen.',
+   'Ein PowerShell-Fenster öffnen, in dem keine Graph-Verbindung läuft. Den Befehl <b>1. Simulation</b> einfügen.',
+   'Die Ausgabe lesen: Stimmen <b>WUERDE entfernen</b> und <b>WUERDE aufnehmen</b>?',
+   'Dann den Befehl <b>2. Echt ausführen</b> einfügen.',
+   'Am Ende prüfen, ob <b>Probleme</b> auf 0 steht. Wenn nicht, zeigen die gelben Zeilen den Grund.'
+  ],
   warum:'<p>Die Klassenverteiler enthalten nicht nur die Kinder, sondern auch die Klassenleitung. In den Jahrgängen 5 und 6 sind das zwei Personen, ab Jahrgang 7 eine.</p>'
        +'<p>Einzige Datenquelle ist bislang der Export „Klassenlehrkräfte“ aus WebUntis. Er nennt nur Kürzel, deshalb braucht das Tool zusätzlich die Lehrerliste mit Kürzel, Vorname und Nachname – daraus bildet es die Adressen mit denselben Regeln wie überall sonst.</p>'
        +'<p><b>Erst nach dem Versetzen ausführen.</b> Vorher heißen die Gruppen noch nach dem alten Jahrgang, und der Abgleich würde in die falschen Verteiler schreiben. Danach passt es von selbst: In der Gruppe 06a steckt noch die Leitung, die sie als 05a hatte, und WebUntis nennt die neue – die Differenz ist genau das, was geändert werden muss.</p>'
        +'<p>Entfernt werden ausschließlich Adressen, die in der Lehrerliste stehen. Ein Kind kann dadurch nie aus seinem Klassenverteiler fallen. Fehlt die Lehrerliste, ergänzt das Skript nur und entfernt nichts.</p>'
        +'<p>Der Lauf ist wiederholbar. Klassen mit einem unbekannten Kürzel werden übersprungen und im Skriptkopf aufgeführt, damit sie nicht stillschweigend verloren gehen.</p>'
-       +'<p>Die Stufenleitungen der Oberstufe und die Oberstufenkoordination stehen ebenfalls im Export, werden aber nicht angefasst – die pflegt ihr weiter von Hand.</p>'},
+       +'<p>Die Stufenleitungen von EP, Q1 und Q2 stehen ebenfalls im Export. Sie werden nur gepflegt, wenn der Haken <b>EP, Q1 und Q2 mitpflegen</b> gesetzt ist. Weitere feste Leitungen wie die Oberstufenkoordination trägst du im Feld darunter ein, sie kommen dann zusätzlich in diese drei Verteiler.</p>'
+       +'<p>Wechselt eine Klassenleitung mitten im Schuljahr, brauchst du nicht den ganzen Export. Dafür gibt es im Werkzeugkasten die Karte <b>Klassenleitung wechseln</b>.</p>'},
 
  {id:'konten', titel:'Konten der neuen Schüler anlegen', reiter:1, ort:'Reiter Zugänge und PowerShell', dauer:'30 Minuten',
  
@@ -6306,6 +6345,154 @@ function leitungSkript(){
 
 
 /* ============================================================
+   Klassenleitung wechseln: einzelne Klassen, unterjaehrig
+   ============================================================ */
+let KLW={zeilen:[]};
+
+/* Kuerzel, vorname.nachname oder volle Adresse -> Adresse */
+function klwAdresse(wert, dom){
+  const v=String(wert||'').trim();
+  if(!v) return null;
+  if(v.indexOf('@')>=0) return v.toLowerCase();
+  const a=leitungAdresse(v);
+  if(a) return a.toLowerCase();
+  if(v.indexOf('.')>0) return (v+'@'+dom).toLowerCase();
+  return null;
+}
+function klwParse(text, dom){
+  const raus=[];
+  text.split(/\r?\n/).forEach((zeile,i)=>{
+    const l=zeile.trim(); if(!l) return;
+    const c=l.split(/[;\t]/).map(x=>x.trim());
+    const z={nr:i+1, roh:l, verteiler:null, klasse:c[0]||'', raus:[], rein:[], fehler:[]};
+    const k=z.klasse.match(/^(\d{1,2})\s*([a-eA-E])$/);
+    if(k && +k[1]>=5 && +k[1]<=10){ z.klasse=k[1].padStart(2,'0')+k[2].toLowerCase(); z.verteiler=z.klasse+'@'+dom; }
+    else if(z.klasse.indexOf('@')>0){ z.verteiler=z.klasse.toLowerCase(); }
+    else z.fehler.push('Klasse „'+z.klasse+'“ unbekannt – erlaubt sind 05a bis 10e oder eine volle Verteileradresse');
+    [['raus',c[1]],['rein',c[2]]].forEach(([art,feld])=>{
+      String(feld||'').split(',').map(x=>x.trim()).filter(Boolean).forEach(w=>{
+        const a=klwAdresse(w, dom);
+        if(a) z[art].push(a); else z.fehler.push('„'+w+'“ ist keiner Adresse zugeordnet');
+      });
+    });
+    if(!z.raus.length && !z.rein.length && !z.fehler.length) z.fehler.push('weder bisher noch neu angegeben');
+    if(z.raus.some(a=>z.rein.indexOf(a)>=0)) z.fehler.push('dieselbe Person steht bei bisher und neu');
+    raus.push(z);
+  });
+  return raus;
+}
+function klwAuswerten(){
+  const dom=($('emailDomain')&&$('emailDomain').value.trim())||'fbg.schwerte.de';
+  const txt=($('klwText')&&$('klwText').value)||'';
+  KLW.zeilen=klwParse(txt, dom);
+  if(!KLW.zeilen.length){
+    $('klwMeld').innerHTML='<div class="box err">Keine Zeile eingetragen. Beispiel: <code>07b;Bir;Lin</code></div>';
+    $('klwWrap').style.display='none'; $('klwUnten').innerHTML=''; return;
+  }
+  klwZeichnen();
+}
+function klwZeichnen(){
+  let h='<thead><tr><th style="width:150px">Verteiler</th><th>wird entfernt</th><th>wird aufgenommen</th><th style="width:130px">Status</th></tr></thead><tbody>';
+  let ok=0, fehler=0;
+  KLW.zeilen.forEach(z=>{
+    const liste=a=>a.length?a.map(esc).join('<br>'):'<span class="muted">–</span>';
+    let status;
+    if(z.fehler.length){ fehler++; status='<span style="color:var(--err)">übersprungen</span><div class="muted" style="font-size:12px">'+z.fehler.map(esc).join('<br>')+'</div>'; }
+    else { ok++; status='<span style="color:var(--ok)">wird geändert</span>'; }
+    h+='<tr><td><b>'+esc(z.verteiler||z.klasse)+'</b></td><td>'+liste(z.raus)+'</td><td>'+liste(z.rein)+'</td><td>'+status+'</td></tr>';
+  });
+  $('klwTab').innerHTML=h+'</tbody>';
+  $('klwWrap').style.display='block';
+  let m='<div class="box ok">'+ok+' Zeilen sind bereit.</div>';
+  if(fehler) m+='<div class="box err"><b>'+fehler+' Zeilen werden übersprungen.</b> Unbekannte Kürzel kannst du in Karte L (Reiter Verteiler versetzen) zuordnen '
+    +'oder hier gleich <code>vorname.nachname</code> eintragen.</div>';
+  $('klwMeld').innerHTML=m;
+  $('klwUnten').innerHTML=ok ? ('<div class="box warn">Ohne Parameter läuft das Skript als <b>Simulation</b>. Erst <code>-Live</code> ändert etwas. '
+      +'Entfernt wird nur, wer bei <b>bisher</b> steht. Schüler und alle anderen Mitglieder bleiben unberührt.</div>'
+    +'<label class="confirm"><input type="checkbox" id="okKlw" onchange="klwKnopf()"> Ich habe die Zuordnung oben geprüft.</label>'
+    +'<div class="flexbtns"><button class="btn" id="dlKlw" disabled onclick="klwDl()">Skript herunterladen (.ps1)</button></div>'
+    +(()=>{ const b=psBefehle('4b_Klassenleitung_Wechsel*.ps1');
+      return '<details open style="margin-top:14px"><summary style="cursor:pointer;font-weight:600;font-size:13.5px">So führst du das Skript aus</summary>'
+        + codeBlock('1. Simulation – zeigt nur, was passieren würde', b.simulation)
+        + codeBlock('2. Echt ausführen', b.live) + '</details>'; })()
+    +'<details style="margin-top:14px"><summary style="cursor:pointer;font-weight:600;font-size:13.5px">Skript im Wortlaut</summary>'
+    +'<pre class="out" id="psKlw" style="margin-top:10px"></pre></details>') : '';
+  if(ok) $('psKlw').textContent=klwSkript();
+}
+function klwKnopf(){ const h=$('okKlw'), b=$('dlKlw'); if(b) b.disabled=!(h&&h.checked); }
+function klwDl(){ speichereDatei('4b_Klassenleitung_Wechsel.ps1', klwSkript(), false); }
+
+function klwSkript(){
+  const qq=s=>"'"+String(s==null?'':s).replace(/'/g,"''")+"'";
+  const fertig=KLW.zeilen.filter(z=>!z.fehler.length);
+  const L=[];
+  L.push('# Klassenleitung wechseln - einzelne Klassenverteiler');
+  L.push('# erzeugt am '+new Date().toLocaleString('de-DE'));
+  L.push('#');
+  L.push('# Ohne Parameter = SIMULATION. Echt ausfuehren:  .\\4b_Klassenleitung_Wechsel.ps1 -Live');
+  L.push('#');
+  L.push('# SICHERHEIT: Entfernt werden ausschliesslich die Adressen, die unter "Raus" stehen.');
+  L.push('#             Alle anderen Mitglieder bleiben unberuehrt. Der Lauf ist wiederholbar.');
+  const weg=KLW.zeilen.filter(z=>z.fehler.length);
+  if(weg.length){
+    L.push('#');
+    L.push('# UEBERSPRUNGEN:');
+    weg.forEach(z=>L.push('#   Zeile '+z.nr+': '+z.roh+'  ('+z.fehler.join('; ')+')'));
+  }
+  L.push('');
+  L.push('param([switch]$Live)');
+  L.push('$DryRun = -not $Live');
+  L.push(psStempel());
+  L.push('');
+  L.push('if(-not (Get-Module -ListAvailable ExchangeOnlineManagement)){');
+  L.push('  Write-Host "Das Modul ExchangeOnlineManagement fehlt. Bitte einmalig ausfuehren:" -ForegroundColor Yellow');
+  L.push('  Write-Host "  Install-Module ExchangeOnlineManagement -Scope CurrentUser -Force -AllowClobber" -ForegroundColor Yellow');
+  L.push('  return');
+  L.push('}');
+  L.push('Import-Module ExchangeOnlineManagement -ErrorAction SilentlyContinue');
+  L.push('if(-not (Get-ConnectionInformation -ErrorAction SilentlyContinue)){ Connect-ExchangeOnline -DisableWAM -ShowBanner:$false }');
+  L.push('');
+  L.push('$Wechsel = @(');
+  fertig.forEach((z,i)=>{
+    L.push('  @{ Verteiler='+qq(z.verteiler)+'; Raus=@('+z.raus.map(qq).join(',')+'); Rein=@('+z.rein.map(qq).join(',')+') }'+(i+1<fertig.length?',':''));
+  });
+  L.push(')');
+  L.push('');
+  L.push('Write-Host "=== Klassenleitung wechseln ==="');
+  L.push('if($DryRun){ Write-Host "MODUS: Simulation (nichts wird veraendert)" } else { Write-Host "MODUS: LIVE" }');
+  L.push('Write-Host ""');
+  L.push('$entfernt=0; $aufgenommen=0; $probleme=0');
+  L.push('foreach($w in $Wechsel){');
+  L.push('  Write-Host ("--- {0} ---" -f $w.Verteiler)');
+  L.push('  $grp = Get-DistributionGroup -Identity $w.Verteiler -ErrorAction SilentlyContinue');
+  L.push('  if(-not $grp){ Write-Host ("  ! Verteiler nicht gefunden: {0}" -f $w.Verteiler) -ForegroundColor Yellow; $probleme++; continue }');
+  L.push('  $istAdr = @(Get-DistributionGroupMember -Identity $grp.PrimarySmtpAddress -ResultSize Unlimited -ErrorAction SilentlyContinue |');
+  L.push('            ForEach-Object { $_.PrimarySmtpAddress.ToString().ToLower() })');
+  L.push('  foreach($r in $w.Raus){');
+  L.push('    if($istAdr -notcontains $r){ Write-Host ("  war nicht Mitglied: {0}" -f $r); continue }');
+  L.push('    if($DryRun){ Write-Host ("  WUERDE entfernen: {0}" -f $r); $entfernt++; continue }');
+  L.push('    try { Remove-DistributionGroupMember -Identity $grp.PrimarySmtpAddress -Member $r -BypassSecurityGroupManagerCheck -Confirm:$false -ErrorAction Stop');
+  L.push('          Write-Host ("  entfernt:  {0}" -f $r); $entfernt++ }');
+  L.push('    catch { Write-Host ("  ! konnte nicht entfernen: {0} - {1}" -f $r,$_.Exception.Message) -ForegroundColor Yellow; $probleme++ }');
+  L.push('  }');
+  L.push('  foreach($n in $w.Rein){');
+  L.push('    if($istAdr -contains $n){ Write-Host ("  schon Mitglied: {0}" -f $n); continue }');
+  L.push('    $e = Get-Recipient -Identity $n -ErrorAction SilentlyContinue');
+  L.push('    if(-not $e){ Write-Host ("  ! Adresse hat kein Postfach: {0}" -f $n) -ForegroundColor Yellow; $probleme++; continue }');
+  L.push('    if($DryRun){ Write-Host ("  WUERDE aufnehmen: {0}" -f $n); $aufgenommen++; continue }');
+  L.push('    try { Add-DistributionGroupMember -Identity $grp.PrimarySmtpAddress -Member $n -BypassSecurityGroupManagerCheck -ErrorAction Stop');
+  L.push('          Write-Host ("  aufgenommen: {0}" -f $n); $aufgenommen++ }');
+  L.push('    catch { Write-Host ("  ! konnte nicht aufnehmen: {0} - {1}" -f $n,$_.Exception.Message) -ForegroundColor Yellow; $probleme++ }');
+  L.push('  }');
+  L.push('}');
+  L.push('');
+  L.push('Write-Host "---"');
+  L.push('Write-Host ("Fertig. Entfernt: {0}   aufgenommen: {1}   Probleme: {2}" -f $entfernt,$aufgenommen,$probleme)');
+  L.push('if($DryRun){ Write-Host "Das war eine SIMULATION. Fuer die echte Ausfuehrung mit  -Live  starten." }');
+  return L.join('\r\n');
+}
+
+/* ============================================================
    SchilD-GUID bei bestehenden Konten nachtragen (extensionAttribute1)
    ============================================================ */
 let GUIDL={leute:[], modus:'schueler'};
@@ -7363,6 +7550,12 @@ function stSkripte(){
     LEIT.lehrer={tab:{'Hei':s.leute[0].email}, alle:[s.leute[0].email]};
     stSkriptPruefen('Klassenleitungen', versuch(()=>leitungSkript()), 'exo');
   } finally { LEIT.klassen=lAlt.k; LEIT.lehrer=lAlt.l; }
+
+  const wAlt=KLW.zeilen;
+  try{
+    KLW.zeilen=klwParse('7b;'+s.leute[0].email+';'+s.leute[1].email, 'fbg.schwerte.de');
+    stSkriptPruefen('Klassenleitung wechseln', versuch(()=>klwSkript()), 'exo');
+  } finally { KLW.zeilen=wAlt; }
 
   const roText=(document.getElementById('psOut')||{}).textContent||'';
   if(roText.trim()) stSkriptPruefen('Verteiler versetzen', roText, 'exo');

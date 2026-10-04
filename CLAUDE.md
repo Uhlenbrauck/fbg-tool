@@ -9,6 +9,7 @@ Diese Datei liest Claude zu Beginn jeder Sitzung automatisch. Sie ersetzt den la
 - **PowerShell-Befehle immer vollständig und kopierbar ausgeben**, nie „zweiter Lauf ohne Parameter …“.
 - Sagt er „ändere noch nichts“ oder „leg mir erst die Vorschläge vor“: erst eine Liste vorlegen, dann auf sein Okay warten.
 - Entscheidungen über SchILD-Rückimporte trifft er nicht allein: „Alles muss ich erst abklären.“
+- GitHub: Kai ist Anfänger. Claude arbeitet auf dem eigenen Branch und pusht nie direkt nach `main`. Fertige Pakete gehen gesammelt als **ein Pull Request** raus; Claude fasst den Inhalt kurz zusammen; erst wenn Kai „merge“ schreibt, merged Claude den Pull Request selbst. Nie ohne dieses Wort. Schritte dafür immer kurz erklären.
 
 ## Datenschutz (wichtigste Regel)
 
@@ -24,7 +25,7 @@ Diese Datei liest Claude zu Beginn jeder Sitzung automatisch. Sie ersetzt den la
 - Abläufe: `VORGAENGE` (art `jahr`/`laufend`) mit `SCHRITTE` {id, titel, reiter, ort, dauer, zweck, anleitung[], warum}. Daraus werden Reiter 0 „Abläufe und Anleitungen“, das Handbuch und die Suche erzeugt.
 - Suche: `suchIndex()`, `suchLauf()`. Briefvorlagen: `VORLAGEN_STD`, Platzhalter über `briefFelder()`; Datum immer TT.MM.JJJJ (`datumDe`).
 - Download: nur eine Funktion `download()` → `speichereDatei(..., true)` = Downloads.
-- Nach jeder Änderung: Version im `<title>` und `<h1>` erhöhen (aktuell v4.58), Selbsttest (Einstellungen → Selbsttest) muss grün bleiben (60/60). Testen z. B. mit Node + jsdom: `selbsttest(false)`.
+- Nach jeder Änderung: Version im `<title>` und `<h1>` erhöhen (aktuell v4.60), Selbsttest (Einstellungen → Selbsttest) muss grün bleiben (65/65). Testen z. B. mit Node + jsdom: `selbsttest(false)`.
 - Achtung bei Ersetzungen: `</style>` kommt mehrfach vor (auch in erzeugten Handbuch-/Brief-Strings).
 
 ## Fachwissen Systeme

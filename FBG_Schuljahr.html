@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>FBG Schuljahr – Konten und Verteiler v4.63</title>
+<title>FBG Schuljahr – Konten und Verteiler v4.66</title>
 <style>
 
   :root{
@@ -439,7 +439,7 @@ th.sortbar:hover{color:var(--accent)}
 <body>
 <header><div class="headwrap">
   <div style="flex:1;min-width:260px">
-    <h1>FBG Schuljahr <span class="vers">v4.63</span></h1>
+    <h1>FBG Schuljahr <span class="vers">v4.66</span></h1>
     <p>Konten, Verteiler und Importdateien für den Schuljahreswechsel. Alles läuft lokal, ohne Internetverbindung.</p>
   </div>
   <div class="suchbox">
@@ -1160,7 +1160,8 @@ Die Grundeinstellungen dazu stehen im Reiter Einstellungen.</p>
   <b>Was hier gemacht wird</b>
   <ul>
     <li>Den <b>vollständigen SchilD-Export</b> mit dem tatsächlichen Zustand in MS365 vergleichen.</li>
-    <li>Ergebnis in vier Gruppen: <b>Neuzugänge</b>, <b>Klassenwechsel</b>, <b>Namensabweichungen</b>, <b>Abgänge</b>.</li>
+    <li>Eine <b>Übersicht je Klasse</b> zeigt auf einen Blick, ob SchilD und Klassenverteiler zusammenpassen.</li>
+    <li>Darunter die Listen: <b>Neuzugänge</b>, <b>Klassenwechsel und falsche Verteiler</b>, <b>Namensabweichungen</b>, <b>Abgänge</b>, <b>Unbekannte im Verteiler</b>.</li>
     <li>Daraus gezielt die passenden Skripte erzeugen – für einzelne Personen statt für den ganzen Jahrgang.</li>
     <li>Ganz unten: zwei SchilD-Exporte rein lokal vergleichen, ohne den Tenant anzufassen.</li>
   </ul>
@@ -1170,20 +1171,10 @@ Die Grundeinstellungen dazu stehen im Reiter Einstellungen.</p>
 <div class="card" id="abgAnleitCard" data-nonr="1">
   <h2><span class="num">?</span> So gehst du vor</h2>
   <div class="cardbody">
-    <ol class="steps">
-      <li><span class="txt"><b>Ist-Zustand auslesen, in zwei Fenstern.</b> Graph und Exchange vertragen sich nicht in
-        derselben PowerShell-Sitzung, deshalb zwei getrennte Läufe: Fenster 1 liest die Konten und schreibt
-        <code>MS365_Konten.csv</code>, Fenster 2 liest die Klassenverteiler und schreibt <code>MS365_Verteiler.csv</code>.
-        Beides landet auf dem Desktop, beides verändert nichts.</span></li>
-      <li><span class="txt"><b>Alle drei Dateien laden.</b> Die beiden eben erzeugten und den <b>vollständigen</b>
-        SchilD-Export – nicht gefiltert, sonst gelten fehlende Zeilen als Abgang. Ohne die Verteilerdatei
-        funktioniert alles außer der Erkennung von Klassenwechseln.</span></li>
-      <li><span class="txt"><b>Vergleichen.</b> Die Übersicht zeigt vier Gruppen. Sieh sie durch, bevor du etwas startest.</span></li>
-      <li><span class="txt"><b>Handeln.</b> Neuzugänge übernimmst du in den Reiter Schüler und erzeugst dort Konten,
-        Passwörter und Briefe. Für Klassenwechsel lädst du das Korrekturskript. Abgänge werden nur aufgelistet.</span></li>
-    </ol>
+    <ol class="steps" id="abgAnleitung"></ol>
+    <div class="hint" style="margin-top:6px">Dieselbe Anleitung steht auf der Startseite beim Schritt „Änderungen abgleichen“ und im Handbuch.</div>
     <div class="box warn" style="margin-top:12px"><b>Voraussetzung:</b> Die SchilD-Kennung muss bei den Konten hinterlegt sein –
-      siehe Reiter Nachlauf. Ohne sie werden Personen nur über die Adresse erkannt, und Abgänge lassen sich gar nicht ermitteln.
+      siehe Reiter Werkzeugkasten. Ohne sie werden Personen nur über die Adresse erkannt, und Abgänge lassen sich gar nicht ermitteln.
       Konten ohne Kennung, etwa Lehrkräfte, tauchen in der Abgangsliste nie auf.</div>
   </div>
 </div>
@@ -4527,11 +4518,30 @@ const SCHRITTE=[
        +'<p>Erzeug die Briefe erst, wenn die Adressen endgültig sind. Änderst du danach noch eine Adress-Ausnahme, stimmen die gedruckten Briefe nicht mehr.</p>'},
 
  {id:'abgleich', titel:'Änderungen abgleichen', reiter:3, ort:'Reiter Abgleich und PowerShell', dauer:'15 Minuten',
-  zweck:'Vergleicht den vollständigen SchilD-Export mit dem tatsächlichen Zustand in MS365 und zeigt, was sich geändert hat.',
+  zweck:'Vergleicht den vollständigen SchilD-Export mit dem tatsächlichen Zustand in MS365 und den Klassenverteilern und zeigt, was sich geändert hat.',
+  anleitung:[
+   '<b>SchilD-Export holen.</b> Den Schülerexport ziehen wie für die Konten – <b>nicht filtern</b>, alle Jahrgänge und Klassen. Fehlende Kinder hält das Werkzeug sonst für Abgänge. Datei im Download-Ordner speichern.',
+   '<b>Fenster 1.</b> PowerShell 7 öffnen. Im Reiter Abgleich, Karte 1, den Block „Fenster 1 – Konten über Graph“ kopieren, einfügen, starten und anmelden. Auf dem Desktop entsteht <code>MS365_Konten.csv</code>.',
+   '<b>Fenster 2.</b> Ein <b>neues</b> PowerShell-Fenster öffnen, den Block „Fenster 2 – Verteiler über Exchange“ kopieren, einfügen, starten und anmelden. Auf dem Desktop entsteht <code>MS365_Verteiler.csv</code>. In der Ausgabe muss „… Lehrkraefte im Kollegiumsverteiler“ stehen – sonst die Adresse des Kollegiumsverteilers in den Einstellungen prüfen. Beide Befehle lesen nur.',
+   '<b>Vergleichen.</b> In Karte 2 die drei Dateien laden und auf <b>Vergleichen</b> klicken.',
+   '<b>Übersicht je Klasse ansehen.</b> ✓ passt = in Ordnung · ⚠ prüfen = die Listen darunter zeigen, wer betroffen ist · Verteiler fehlt = erst anlegen (Reiter Zugänge, Skript Klassenverteiler). Steht überall ✓, bist du fertig.',
+   '<b>Ohne Verteiler-Zuordnung zuerst klären.</b> Fehlt das Abiturjahr für EP, Q1 oder Q2, in den Einstellungen eintragen; steht in SchilD eine ungewöhnliche Klasse, dort berichtigen. Dann neu vergleichen.',
+   '<b>Haken prüfen.</b> Klassenwechsel und falsche Verteiler: vorausgewählt, nur abwählen, wenn SchilD falsch ist · Nicht mehr im Export: vorausgewählt, die Kinder kommen aus ihren Klassenverteilern, das Konto bleibt · Unbekannt im Verteiler: nichts vorausgewählt, nur anhaken, was wirklich heraus soll · Namensabweichungen: nur zur Info.',
+   '<b>Korrekturskript herunterladen.</b> Ganz unten im Ergebnis; <code>6_Klassenwechsel.ps1</code> landet im Download-Ordner.',
+   '<b>Simulation starten.</b> Den Befehl unter „So führst du das Skript aus“, Teil 1, kopieren und ausführen. Die Ausgabe lesen: bei jedem Kind „WUERDE entfernen aus …“ oder „WUERDE aufnehmen in …“. Gelbe Zeilen mit <b>!</b> zuerst klären.',
+   '<b>Echt ausführen.</b> Den Befehl aus Teil 2 kopieren und ausführen – er startet das Skript mit <code>-Live</code>.',
+   '<b>Neuzugänge</b>, falls es welche gibt: mit dem Knopf in den Reiter Zugänge übernehmen und dort wie gewohnt Konten, Passwörter und Briefe erzeugen.',
+   '<b>Kontrolle.</b> Fenster 2 noch einmal laufen lassen, die neue Datei laden und erneut vergleichen. Jetzt sollte überall ✓ stehen.',
+   '<b>Abschließen.</b> Auf der Startseite im Vorgang die Schritte abhaken und „Vorgang abschließen“ klicken.',
+   '<b>Aufräumen.</b> Die CSV-Dateien vom Desktop löschen – sie enthalten Namen von Schülerinnen und Schülern.'
+  ],
   warum:'<p>Nach dem Sommer ist nicht Schluss. Wiederholer, nicht bestandene Nachprüfungen, Zuzüge und Abgänge ändern die Lage noch wochenlang. Dieser Schritt ersetzt das mühsame Nachpflegen von Hand.</p>'
        +'<p>Er läuft in zwei Teilen: Ein Leseskript holt den Ist-Zustand aus MS365 und Exchange in eine Datei – wer existiert, welche Kennung er trägt, in welchem Klassenverteiler er steckt. Diese Datei ladet ihr zusammen mit dem <b>vollständigen</b> SchilD-Export ins Werkzeug, das daraus die Unterschiede rechnet.</p>'
        +'<p>Voraussetzung ist, dass die SchilD-Kennung bei den Konten hinterlegt ist. Nur dadurch werden Personen sicher wiedererkannt, auch wenn sich Name oder Adresse geändert haben. Konten ohne Kennung tauchen bei den Abgängen nie auf – Lehrkräfte sind dadurch automatisch geschützt.</p>'
-       +'<p>Abgänge werden nur aufgelistet, nie abgeschaltet. Ein Konto zu deaktivieren ist eine Entscheidung mit Folgen und bleibt bei euch.</p>'
+       +'<p><b>Was in den Klassenverteilern geprüft wird:</b> Steht jedes Kind im Verteiler seiner Klasse? Steckt es zusätzlich noch in einem falschen? Stehen Abgänge noch drin? Und wer steht drin, ohne Kind oder Lehrkraft zu sein? Lehrkräfte gehören als Klassenleitung hinein und werden nie gemeldet. Erkannt werden sie vor allem daran, dass sie im Kollegiumsverteiler stehen – Fenster 2 liest ihn mit. Daneben zählen die Position im Konto (Lehrkraft, Referendar) und die Lehrerliste der Karte Klassenleitungen.</p>'
+       +'<p>Kinder in falschen Verteilern und Abgänge sind im Korrekturskript vorausgewählt – ein Fehler ist mit einem Handgriff zurückgenommen. Unbekannte Mitglieder sind nie vorausgewählt.</p>'
+       +'<p>Abgänge verlieren nur ihre Verteiler, das Konto wird nie abgeschaltet. Ein Konto zu deaktivieren ist eine Entscheidung mit Folgen und bleibt bei euch.</p>'
+       +'<p>Die Startseite erinnert vier Wochen nach dem Versetzen der Verteiler an diesen Schritt und zeigt, wann er zuletzt lief.</p>'
        +'<p>Der Schritt ist beliebig oft wiederholbar und ändert von sich aus nichts. Er erzeugt nur Listen und Skripte, die ihr anschließend bewusst startet.</p>'},
 
  {id:'lehrer', titel:'Neue Lehrkräfte anlegen', reiter:1, ort:'Reiter Zugänge, Bereich Lehrkräfte', dauer:'20 Minuten',
@@ -4632,7 +4642,7 @@ const VORGAENGE=[
 
  {id:'klassenwechsel', titel:'Klassenwechsel nachziehen', art:'laufend', zeit:'nach den Ferien',
   einleitung:'Wiederholer, nicht bestandene Nachprüfungen, Umstufungen. Sinnvoll, sobald alle Wechsel feststehen – '
-    +'meist ein paar Wochen nach Schuljahresbeginn.',
+    +'meist ein paar Wochen nach Schuljahresbeginn. Die Startseite erinnert vier Wochen nach dem Versetzen der Verteiler daran.',
   schritte:[
    {ref:'abgleich'},
    {ref:'leitungen'}
@@ -4660,7 +4670,7 @@ const SYSTEME=[
 /* ---------- Stand ---------- */
 const STAND_DATEI='FBG_Schuljahr_Stand.json';
 const STAND_LS='fbg_schuljahr_stand';
-let STAND={schuljahr:'', wer:'', schritte:{}, laeufe:{}, einst:{}, ausnahmen:{}, jamfNamen:{}, jamfApple:{}, jamfBekannt:{}, praktika:{}, vorlagen:[]};
+let STAND={schuljahr:'', wer:'', schritte:{}, laeufe:{}, einst:{}, ausnahmen:{}, jamfNamen:{}, jamfApple:{}, jamfBekannt:{}, praktika:{}, vorlagen:[], abgleich:{}};
 let ordner=null, ordnerWartet=null, reiterAktiv=0;
 
 const EINST_TEXT=['emailDomain','appleDomain','position','sammelverteiler','urlJamf','urlIServ',
@@ -4852,7 +4862,7 @@ async function standLaden(){
   if(!txt){ try{ txt=localStorage.getItem(STAND_LS); }catch(e){ } }
   if(txt){ try{
     const o=JSON.parse(txt);
-    STAND=Object.assign({schuljahr:'',wer:'',schritte:{},laeufe:{},einst:{},ausnahmen:{},jamfNamen:{},jamfApple:{},jamfBekannt:{},praktika:{},vorlagen:[]},o);
+    STAND=Object.assign({schuljahr:'',wer:'',schritte:{},laeufe:{},einst:{},ausnahmen:{},jamfNamen:{},jamfApple:{},jamfBekannt:{},praktika:{},vorlagen:[],abgleich:{}},o);
     letzterStempel = (STAND.stempel && STAND.stempel.zeit) || null;
   }catch(e){ } }
   standAnwenden();
@@ -4885,7 +4895,7 @@ function standDl(){ standSchreiben(); dateiHerunterladen('FBG_Schuljahr_Stand.js
 function standAusDatei(text){
   try{
     const o=JSON.parse(text);
-    STAND=Object.assign({schuljahr:'',wer:'',schritte:{},laeufe:{},einst:{},ausnahmen:{},jamfNamen:{},jamfApple:{},jamfBekannt:{},praktika:{},vorlagen:[]},o);
+    STAND=Object.assign({schuljahr:'',wer:'',schritte:{},laeufe:{},einst:{},ausnahmen:{},jamfNamen:{},jamfApple:{},jamfBekannt:{},praktika:{},vorlagen:[],abgleich:{}},o);
     standAnwenden(); standSchreiben();
     alert('Stand übernommen.');
   }catch(e){ alert('Die Datei konnte nicht gelesen werden: '+e.message); }
@@ -4955,7 +4965,7 @@ function startseiteZeichnen(){
   const ziel=$('startseite'); if(!ziel) return;
   const jahr=VORGAENGE.filter(v=>v.art==='jahr');
   const lauf=VORGAENGE.filter(v=>v.art==='laufend');
-  let h='';
+  let h=abgErinnerung();
   h+='<div class="bereich"><div class="bereichkopf">Einmal im Jahr</div>'
     + jahr.map(vorgangKarte).join('') + '</div>';
   h+='<div class="bereich"><div class="bereichkopf">Im laufenden Schuljahr</div>'
@@ -4963,6 +4973,30 @@ function startseiteZeichnen(){
     +'Sie werden nicht dauerhaft abgehakt – wenn du fertig bist, schließt du sie ab und die Haken gehen auf null.</p>'
     + lauf.map(vorgangKarte).join('') + '</div>';
   ziel.innerHTML=h;
+}
+
+/* Erinnerung: einige Wochen nach dem Versetzen die Klassenverteiler gegen SchilD prüfen.
+   Bezugspunkt ist der Haken beim Schritt Verteiler versetzen. */
+function abgErinnerung(){
+  const a=STAND.abgleich||{};
+  const rs=STAND.schritte && STAND.schritte.wechsel && STAND.schritte.wechsel.rollover;
+  const start=(rs && rs.status==='fertig' && rs.wann) ? new Date(rs.wann) : null;
+  const letzt=a.wann ? new Date(a.wann) : null;
+  const fmt=d=>d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'});
+  const zeile = letzt
+    ? 'Klassenabgleich zuletzt am <b>'+fmt(letzt)+'</b>'+(a.wer?' durch '+esc(a.wer):'')
+      +' · '+(a.abweichungen ? 'damals '+a.abweichungen+' Abweichungen' : 'damals passte alles')
+    : 'Klassenabgleich: noch nie durchgeführt.';
+  const ab = start ? new Date(start.getTime()+28*864e5) : null;
+  const faellig = ab && Date.now()>=ab.getTime() && (!letzt || letzt<ab);
+  if(faellig){
+    return '<div class="box warn" style="margin-bottom:14px"><b>Klassenabgleich steht an.</b> '
+      +'Die Verteiler wurden am '+fmt(start)+' versetzt, seitdem sind vier Wochen vergangen. '
+      +'Jetzt prüfen, ob die Klassen aus SchilD zu den Klassenverteilern passen – Vorgang „Klassenwechsel nachziehen“.<br>'
+      +'<span class="muted">'+zeile+'</span>'
+      +'<div class="flexbtns" style="margin-top:8px"><button class="btn sm" onclick="zeigeReiter(3)">Zum Abgleich</button></div></div>';
+  }
+  return '<p class="hint" style="margin:0 0 12px">'+zeile+'</p>';
 }
 
 function vorgangKarte(v){
@@ -5101,7 +5135,7 @@ const REITER=[
  ['Start','Die Startseite erklärt zuerst, was das Werkzeug tut und wie zu zweit damit gearbeitet wird. Darunter fragt sie: Was steht an? Oben der Schuljahreswechsel, dann die kleinen Vorgänge für das laufende Schuljahr. Jeder Vorgang klappt auf und zeigt seine Schritte mit Zweck, Ort, Dauer und Voraussetzung. Hier wird abgehakt, hier liegen die Notizen, hier stehen Handbuch und Laufbuch.'],
  ['Zugänge & Versetzung','Die Arbeitsfläche für Personen. Oben ein farbiges Band, das anzeigt, ob gerade mit Schülerdaten oder mit Daten von Lehrkräften gearbeitet wird – umschalten geht direkt daneben. Aus dem eingefügten Export entstehen Adressen, Passwörter, das Skript zum Anlegen der Konten, die Dateien für Jamf und IServ sowie Briefe und Mailtexte. Die Frage „Sollen Passwörter erzeugt werden?" entscheidet dabei, welche Dateien überhaupt entstehen: ohne Passwörter gibt es weder Konten-Skript noch Briefe noch Passwortliste – richtig für eine reine Versetzung. Die Dateien für Jamf und IServ setzen beim Import zugleich die Klassen neu – dort findet die Versetzung dieser beiden Systeme statt.'],
  ['Verteiler versetzen','Alles rund um die Mailverteiler: die Sicherung vor dem Versetzen, das Versetzen selbst und der Abgleich der Klassenleitungen aus dem WebUntis-Export.'],
- ['Abgleich','Vergleicht den vollständigen SchilD-Export mit dem tatsächlichen Zustand in MS365 und zeigt Neuzugänge, Klassenwechsel, Namensabweichungen und Abgänge. Ändert von sich aus nichts.'],
+ ['Abgleich','Vergleicht den vollständigen SchilD-Export mit dem tatsächlichen Zustand in MS365 und den Klassenverteilern. Zeigt eine Übersicht je Klasse und darunter Neuzugänge, Klassenwechsel und falsche Verteiler, Namensabweichungen, Abgänge und unbekannte Mitglieder. Ändert von sich aus nichts; das Korrekturskript startest du selbst.'],
  ['Werkzeugkasten','Zweigeteilt. Oben, was immer wieder gebraucht wird: der Nachlauf mit Kontrollbefehlen zum Kopieren, die Importdatei, mit der die Mailadressen zurück nach SchILD geschrieben werden, die CSV, die den WebUntis-Benutzern ihre Office-365-Identität für die Anmeldung per SSO nachträgt, und die TeacherGroups-CSV, die Lehrkräfte in Jamf als Lehrer in ihre Klassen setzt. Unten, was einmal gemacht wurde und nur noch zum Nachschlagen dasteht: die SchilD-Kennung bei Altkonten nachtragen und die Einstellungen der IServ-Importprofile.'],
  ['Einstellungen','Zweigeteilt. Einmal einrichten: Domains, Lizenzen, Sammelverteiler und die Adressen der Zielsysteme. Jedes Jahr prüfen: Klassenzüge und die Abiturjahre für EP, Q1 und Q2 – daraus entsteht das Versetzen der Verteiler. Ganz unten der Selbsttest, der das Werkzeug gegen sich selbst prüft.']
 ];
@@ -6951,8 +6985,17 @@ function guidSkript(){
    Änderungsabgleich: SchilD gegen den Ist-Zustand in MS365
    ============================================================ */
 let ABG={bestand:[], kopf:'', zeilen:[], erg:null, trenner:';'};
+setTimeout(()=>{ try{ abgAnleitungZeichnen(); }catch(e){} },0);
 
+/* Die Karte „So gehst du vor“ zeigt die Anleitung des Schritts abgleich -
+   gepflegt wird sie nur an einer Stelle, in SCHRITTE. */
+function abgAnleitungZeichnen(){
+  const ol=$('abgAnleitung'); const st=schritt('abgleich');
+  if(!ol || !st || !st.anleitung) return;
+  ol.innerHTML=st.anleitung.map(x=>'<li><span class="txt">'+x+'</span></li>').join('');
+}
 function abgleichStart(){
+  abgAnleitungZeichnen();
   [['bestDatei','bestText'],['vertDatei','vertText'],['schildDatei','schildText']].forEach(([f,t])=>{
     const el=$(f); if(!el || el.dataset.bereit) return;
     el.dataset.bereit='1';
@@ -6960,6 +7003,7 @@ function abgleichStart(){
       const r=new FileReader(); r.onload=()=>{ $(t).value=String(r.result); }; r.readAsText(d); };
   });
   const b=$('bestBefehl');
+  if(b && b.dataset.fertig){ const vc=$('vertCode'); if(vc) vc.textContent=bestandBefehlExchange(); }
   if(b && !b.dataset.fertig){
     b.innerHTML=
       '<div style="font-weight:650;font-size:13.5px;margin:4px 0 2px">Fenster 1 – Konten über Graph</div>'
@@ -6987,7 +7031,7 @@ function bestandBefehlGraph(){
  'if(-not (Get-MgContext)){ Connect-MgGraph -Scopes "User.Read.All" }',
  '',
  'Write-Host "Lese Konten ..."',
- '$users = Get-MgUser -All -Property Id,UserPrincipalName,DisplayName,GivenName,Surname,AccountEnabled,OnPremisesExtensionAttributes,AssignedLicenses,JobTitle',
+ '$users = Get-MgUser -All -Property Id,UserPrincipalName,Mail,DisplayName,GivenName,Surname,AccountEnabled,OnPremisesExtensionAttributes,AssignedLicenses,JobTitle',
  'Write-Host ("  {0} Konten" -f $users.Count)',
  '',
  '$zeilen = foreach($u in $users){',
@@ -6996,6 +7040,7 @@ function bestandBefehlGraph(){
  '  [pscustomobject]@{',
  '    Kennung     = $kenn',
  '    UPN         = $u.UserPrincipalName',
+ '    Mail        = $u.Mail',
  '    Anzeigename = $u.DisplayName',
  '    Vorname     = $u.GivenName',
  '    Nachname    = $u.Surname',
@@ -7029,18 +7074,42 @@ function bestandBefehlExchange(){
  '',
  '$zeilen = foreach($g in $gruppen){',
  '  $kl = ($g.PrimarySmtpAddress -split "@")[0]',
- '  foreach($m in @(Get-DistributionGroupMember -Identity $g.PrimarySmtpAddress -ResultSize Unlimited -ErrorAction SilentlyContinue)){',
+ '  $mitglieder = @(Get-DistributionGroupMember -Identity $g.PrimarySmtpAddress -ResultSize Unlimited -ErrorAction SilentlyContinue)',
+ '  # Leere Verteiler trotzdem aufschreiben, damit das Werkzeug sie kennt',
+ '  if(-not $mitglieder.Count){ [pscustomobject]@{ Adresse = ""; Verteiler = $kl; Name = "" } }',
+ '  foreach($m in $mitglieder){',
  '    $a = "$($m.PrimarySmtpAddress)"',
- '    if($a){ [pscustomobject]@{ Adresse = $a; Verteiler = $kl } }',
+ '    if($a){ [pscustomobject]@{ Adresse = $a; Verteiler = $kl; Name = "$($m.DisplayName)" } }',
  '  }',
  '}',
- 'Write-Host ("  {0} Mitgliedschaften" -f @($zeilen).Count)',
+ '',
+ '# Kollegiumsverteiler mitlesen: daran erkennt das Werkzeug die Lehrkraefte.',
+ '# Enthaltene Gruppen werden eine Ebene tief aufgeloest.',
+ '$Kollegium = '+"'"+String((($('verteiler')||{}).value||'kollegium@fbg.schwerte.de').trim()).replace(/'/g,"''")+"'",
+ '$lehr = @()',
+ 'if($Kollegium){',
+ '  $kg = Get-DistributionGroup -ResultSize Unlimited -ErrorAction SilentlyContinue | Where-Object { $_.PrimarySmtpAddress -eq $Kollegium } | Select-Object -First 1',
+ '  if($kg){',
+ '    foreach($m in @(Get-DistributionGroupMember -Identity $kg.PrimarySmtpAddress -ResultSize Unlimited -ErrorAction SilentlyContinue)){',
+ '      if("$($m.RecipientType)" -like "*Group*"){',
+ '        foreach($u in @(Get-DistributionGroupMember -Identity "$($m.PrimarySmtpAddress)" -ResultSize Unlimited -ErrorAction SilentlyContinue)){',
+ '          if("$($u.PrimarySmtpAddress)"){ $lehr += [pscustomobject]@{ Adresse = "$($u.PrimarySmtpAddress)"; Verteiler = "#Kollegium"; Name = "$($u.DisplayName)" } }',
+ '        }',
+ '      } elseif("$($m.PrimarySmtpAddress)"){',
+ '        $lehr += [pscustomobject]@{ Adresse = "$($m.PrimarySmtpAddress)"; Verteiler = "#Kollegium"; Name = "$($m.DisplayName)" }',
+ '      }',
+ '    }',
+ '    Write-Host ("  {0} Lehrkraefte im Kollegiumsverteiler" -f $lehr.Count)',
+ '  } else { Write-Host ("  ! Kollegiumsverteiler {0} nicht gefunden - Lehrkraefte werden dann nur ueber die Position erkannt" -f $Kollegium) -ForegroundColor Yellow }',
+ '}',
+ '$zeilen = @($zeilen) + $lehr',
+ 'Write-Host ("  {0} Zeilen" -f @($zeilen).Count)',
  '',
  '$ziel = "$env:USERPROFILE\\Desktop\\MS365_Verteiler.csv"',
  '[IO.File]::WriteAllLines($ziel, ($zeilen | ConvertTo-Csv -Delimiter ";" -NoTypeInformation), [Text.UTF8Encoding]::new($true))',
  'Write-Host ""',
  'Write-Host "Fertig: $ziel" -ForegroundColor Green',
- 'Write-Host "Beide Dateien im Werkzeug unter Aenderungsabgleich laden."'
+ 'Write-Host "Beide Dateien im Werkzeug im Reiter Abgleich laden."'
   ].join('\r\n');
 }
 
@@ -7063,6 +7132,13 @@ function abgSollVerteiler(klasse){
   if(/^\d{2}[a-eA-E]$/.test(k)) return k.toLowerCase();
   return abgStufenname(k);
 }
+/* Warum ein Kind keinem Verteiler zugeordnet werden kann - für die Liste D */
+function abgOhneZielGrund(klasse){
+  const k=String(klasse||'').trim();
+  if(!k) return 'In SchilD steht keine Klasse.';
+  if(/^(EP|EF|Q1|Q2)$/i.test(k)) return 'Das Abiturjahr für '+k.toUpperCase()+' fehlt in den Einstellungen.';
+  return 'Zur Klasse „'+k+'“ gibt es keine Verteilerregel (erlaubt: 05a bis 10e, EP, Q1, Q2).';
+}
 
 /* ---------- Bestandsdatei lesen ---------- */
 function abgLiesBestand(text){
@@ -7071,7 +7147,7 @@ function abgLiesBestand(text){
   const tr=detectDelim(text);
   const kopf=splitLine(zeilen[0],tr).map(h=>String(h).replace(/^"|"$/g,'').trim().toLowerCase());
   const i=n=>kopf.indexOf(n);
-  const iK=i('kennung'), iU=i('upn'), iA=i('anzeigename'), iV=i('vorname'), iN=i('nachname'),
+  const iK=i('kennung'), iU=i('upn'), iM=i('mail'), iA=i('anzeigename'), iV=i('vorname'), iN=i('nachname'),
         iAk=i('aktiv'), iL=i('lizenzen'), iP=i('position'), iVt=i('verteiler');
   if(iU<0) return [];
   const raus=[];
@@ -7079,7 +7155,7 @@ function abgLiesBestand(text){
     const c=splitLine(zeilen[z],tr).map(x=>String(x==null?'':x).replace(/^"|"$/g,'').trim());
     if(!c[iU]) continue;
     raus.push({
-      kennung:iK>=0?c[iK]:'', upn:c[iU], anzeigename:iA>=0?c[iA]:'',
+      kennung:iK>=0?c[iK]:'', upn:c[iU], mail:iM>=0?c[iM]:'', anzeigename:iA>=0?c[iA]:'',
       vorname:iV>=0?c[iV]:'', nachname:iN>=0?c[iN]:'',
       aktiv:iAk>=0? !/^(false|falsch|0|nein)$/i.test(c[iAk]) : true,
       lizenzen:iL>=0?parseInt(c[iL],10)||0:0,
@@ -7090,48 +7166,162 @@ function abgLiesBestand(text){
   return raus;
 }
 
-/* ---------- Verteilerdatei lesen ---------- */
+/* ---------- Verteilerdatei lesen ----------
+   nach:    Adresse (klein) -> Liste der Verteiler
+   gruppen: Verteiler (klein) -> {name, mitglieder:[{adresse,name}]}
+   kollegium: Adressen aus dem Kollegiumsverteiler (Zeilen mit Verteiler #Kollegium)
+   Leere Verteiler stehen mit leerer Adresse in der Datei. */
 function abgLiesVerteiler(text){
-  const nach={};
+  const nach={}, gruppen={}, kollegium={};
   const zeilen=String(text||'').split(/\r?\n/).filter(z=>z.trim());
-  if(!zeilen.length) return nach;
+  if(!zeilen.length) return {nach, gruppen, kollegium};
   const tr=detectDelim(text);
   const kopf=splitLine(zeilen[0],tr).map(h=>String(h).replace(/^"|"$/g,'').trim().toLowerCase());
-  const iA=kopf.indexOf('adresse'), iV=kopf.indexOf('verteiler');
-  if(iA<0||iV<0) return nach;
+  const iA=kopf.indexOf('adresse'), iV=kopf.indexOf('verteiler'), iN=kopf.indexOf('name');
+  if(iA<0||iV<0) return {nach, gruppen, kollegium};
   for(let z=1;z<zeilen.length;z++){
     const c=splitLine(zeilen[z],tr).map(x=>String(x==null?'':x).replace(/^"|"$/g,'').trim());
     const a=(c[iA]||'').toLowerCase(), v=c[iV]||'';
-    if(!a||!v) continue;
+    if(!v) continue;
+    if(v==='#Kollegium'){ if(a) kollegium[a]=true; continue; }
+    const g=v.toLowerCase();
+    if(!gruppen[g]) gruppen[g]={name:v, mitglieder:[]};
+    if(!a) continue;
+    if(!gruppen[g].mitglieder.some(m=>m.adresse===a)) gruppen[g].mitglieder.push({adresse:a, name:iN>=0?(c[iN]||''):''});
     if(!nach[a]) nach[a]=[];
     if(nach[a].indexOf(v)<0) nach[a].push(v);
   }
-  return nach;
+  return {nach, gruppen, kollegium};
 }
 
-/* ---------- Abgleich rechnen ---------- */
+/* Lehrkräfte gehören als Klassenleitung in die Verteiler und werden nie gemeldet.
+   Erkannt vor allem am Kollegiumsverteiler (Fenster 2), daneben an der Position im Konto
+   oder an der Lehrerliste der Karte Klassenleitungen. Die Position allein reicht nicht:
+   ältere Lehrerkonten haben dort nichts stehen. */
+function abgIstLehrkraft(konto, adresse, kollegium){
+  const adr=[adresse, konto&&konto.upn, konto&&konto.mail].map(x=>String(x||'').toLowerCase()).filter(Boolean);
+  if(kollegium && adr.some(a=>kollegium[a])) return true;
+  if(konto && /lehr|referend/i.test(konto.position||'')) return true;
+  const alle=(typeof LEIT!=='undefined' && LEIT.lehrer && LEIT.lehrer.alle) || [];
+  return alle.some(x=>adr.indexOf(String(x).toLowerCase())>=0);
+}
+
+/* ---------- Abgleich rechnen: der Kern, ohne Oberfläche ----------
+   bestand: aus abgLiesBestand, vert: aus abgLiesVerteiler, rows: SchilD-Zeilen aus parseInput */
+function abgKern(bestand, vert, rows, domain, ausnahmen){
+  ausnahmen=ausnahmen||{};
+  vert=vert||{nach:{}, gruppen:{}, kollegium:{}};
+  vert.kollegium=vert.kollegium||{};
+  const nachKennung={}, nachAdr={};
+  bestand.forEach(b=>{
+    const adr=[b.upn,b.mail].map(x=>String(x||'').toLowerCase()).filter(Boolean);
+    const vs=(b.verteiler||[]).slice();
+    /* Verteiler über UPN und Mailadresse zuordnen - Exchange liefert die Mailadresse */
+    adr.forEach(a=>{
+      nachAdr[a]=b;
+      (vert.nach[a]||[]).forEach(v=>{ if(!vs.some(x=>x.toLowerCase()===v.toLowerCase())) vs.push(v); });
+    });
+    b.verteiler=vs;
+    if(b.kennung) nachKennung[b.kennung]=b;
+  });
+  const gruppenBekannt=Object.keys(vert.gruppen).length>0;
+  /* Ohne Verteilerangaben ist Fenster 2 nicht gelaufen.
+     Dann darf der Klassenvergleich nicht stattfinden - er würde jeden melden. */
+  const hatVerteiler = gruppenBekannt || bestand.some(b=>b.verteiler.length>0);
+
+  const stat={};
+  const st=name=>{
+    const k=String(name).toLowerCase();
+    if(!stat[k]) stat[k]={name:String(name), vorhanden:!!vert.gruppen[k], schild:0, mitglieder:0, lehr:0,
+                          fehlt:0, ohneKonto:0, zuviel:0, unklar:0};
+    return stat[k];
+  };
+  Object.keys(vert.gruppen).forEach(k=>{ st(vert.gruppen[k].name).mitglieder=vert.gruppen[k].mitglieder.length; });
+
+  const neu=[], wechsel=[], namen=[], ok=[], ohneKennung=[], ohneZiel=[];
+  const gesehen={}, schuelerKonto=new Set();
+  rows.forEach((r,idx)=>{
+    if(!r.nachname||!r.vorname) return;
+    const schluessel = r.guid || localPart(r.vorname,r.nachname);
+    const lokal = ausnahmen[schluessel] || localPart(r.vorname,r.nachname);
+    const upn = lokal+'@'+domain;
+    const person = {idx, guid:r.guid||'', klasse:r.klasse||'', vorname:r.vorname, nachname:r.nachname,
+                    name:(firstGiven(r.vorname)+' '+r.nachname).trim(), upn};
+    if(!r.guid) ohneKennung.push(person);
+    const soll=abgSollVerteiler(person.klasse);
+    if(soll) st(soll).schild++;
+    else ohneZiel.push(person);
+    const konto = (r.guid && nachKennung[r.guid]) || nachAdr[upn.toLowerCase()] || null;
+    if(!konto){ neu.push(person); if(soll) st(soll).ohneKonto++; return; }
+    person.konto=konto;
+    schuelerKonto.add(konto);
+    if(konto.kennung) gesehen[konto.kennung]=true;
+
+    if(soll && hatVerteiler){
+      const sl=soll.toLowerCase();
+      const drin=konto.verteiler.some(v=>v.toLowerCase()===sl);
+      const andere=konto.verteiler.filter(v=>v.toLowerCase()!==sl);
+      if(!drin || andere.length){
+        wechsel.push({...person, von:andere, nach:soll, drin,
+          art: drin ? 'zusätzlich' : (andere.length ? 'Wechsel' : 'fehlt')});
+        if(!drin) st(soll).fehlt++;
+        andere.forEach(v=>st(v).zuviel++);
+      }
+    }
+    if(konto.anzeigename && konto.anzeigename.trim() && konto.anzeigename.trim()!==person.name){
+      namen.push({...person, kontoName:konto.anzeigename});
+    }
+    ok.push(person);
+  });
+
+  /* Praktikums-Kennungen stehen in keinem SchilD-Export und wären sonst
+     bei jedem Lauf ein Abgang. */
+  const abgang = bestand
+    .filter(b=>b.kennung && !gesehen[b.kennung] && !/^PRAKT-/i.test(String(b.kennung).trim()))
+    .map(b=>({konto:b, anzeigename:b.anzeigename, upn:b.upn, kennung:b.kennung, aktiv:b.aktiv,
+              verteiler:b.verteiler.slice(), an:b.verteiler.length>0}));
+  abgang.forEach(a=>a.verteiler.forEach(v=>st(v).zuviel++));
+  const abgKonto=new Set(abgang.map(a=>a.konto));
+
+  /* Wer sonst noch in einem Klassenverteiler steckt: weder Kind laut SchilD
+     noch Abgang noch Lehrkraft. Nur anzeigen, nichts vorauswählen. */
+  const fremd=[];
+  Object.keys(vert.gruppen).forEach(k=>{
+    const g=vert.gruppen[k];
+    g.mitglieder.forEach(m=>{
+      const konto=nachAdr[m.adresse]||null;
+      if(konto && (schuelerKonto.has(konto) || abgKonto.has(konto))) return;
+      if(abgIstLehrkraft(konto, m.adresse, vert.kollegium)){ st(g.name).lehr++; return; }
+      st(g.name).unklar++;
+      fremd.push({adresse:m.adresse, name:(konto&&konto.anzeigename)||m.name||'', gruppe:g.name,
+                  konto, position:konto?konto.position:'', kennung:konto?konto.kennung:'', an:false});
+    });
+  });
+
+  const sortKey=n=>(/^\d/.test(n)?'0':'1')+n.toLowerCase();
+  const statListe=Object.values(stat).sort((a,b)=>sortKey(a.name)<sortKey(b.name)?-1:1);
+  statListe.forEach(s=>{
+    s.zustand = (gruppenBekannt && !s.vorhanden && s.schild) ? 'fehlt'
+      : (s.fehlt||s.ohneKonto||s.zuviel||s.unklar) ? 'abweichung'
+      : (s.vorhanden && !s.schild) ? 'leer' : 'ok';
+  });
+
+  return {neu, wechsel, namen, abgang, fremd, ok, ohneKennung, ohneZiel, stat:statListe,
+          hatVerteiler, gruppenBekannt, kollegium:Object.keys(vert.kollegium).length, gesamt:rows.length};
+}
+
+/* ---------- Abgleich starten (Knopf Vergleichen) ---------- */
 function abgleichRechnen(){
   const meld=$('abgMeld');
   const bText=($('bestText')&&$('bestText').value)||'';
   const sText=($('schildText')&&$('schildText').value)||'';
-  if(!bText.trim()){ meld.innerHTML='<div class="box err">Die Bestandsdatei fehlt. Erst das Leseskript oben ausführen, dann <code>MS365_Bestand.csv</code> laden.</div>'; return; }
+  if(!bText.trim()){ meld.innerHTML='<div class="box err">Die Kontendatei fehlt. Erst das Leseskript oben ausführen, dann <code>MS365_Konten.csv</code> laden.</div>'; return; }
   if(!sText.trim()){ meld.innerHTML='<div class="box err">Der SchilD-Export fehlt.</div>'; return; }
 
   const bestand=abgLiesBestand(bText);
   if(!bestand.length){ meld.innerHTML='<div class="box err">Die Kontendatei ließ sich nicht lesen. Erwartet werden die Spalten aus Fenster 1, mindestens <code>UPN</code>.</div>'; return; }
-  const vText=($('vertText')&&$('vertText').value)||'';
-  const vMap=abgLiesVerteiler(vText);
-  bestand.forEach(b=>{
-    const k=String(b.upn||'').toLowerCase();
-    if(vMap[k]) b.verteiler=vMap[k];
-  });
+  const vert=abgLiesVerteiler(($('vertText')&&$('vertText').value)||'');
   ABG.bestand=bestand;
-
-  const nachKennung={}, nachUpn={};
-  bestand.forEach(b=>{ if(b.kennung) nachKennung[b.kennung]=b; if(b.upn) nachUpn[b.upn.toLowerCase()]=b; });
-  /* Ohne Verteilerangaben ist der Exchange-Teil des Leseskripts nicht gelaufen.
-     Dann darf der Klassenvergleich nicht stattfinden - er wuerde jeden melden. */
-  ABG.hatVerteiler = bestand.some(b=>b.verteiler.length>0);
 
   /* SchilD lesen, Rohzeilen mitführen */
   const alle=sText.split(/\r?\n/).filter(z=>z.trim());
@@ -7143,44 +7333,23 @@ function abgleichRechnen(){
 
   const p=parseInput(sText);
   const c=cfg();
-  const neu=[], wechsel=[], namen=[], ok=[], ohneKennung=[];
-  const gesehen={};
+  const e=abgKern(bestand, vert, p.rows, c.emailDomain, state.ausnahmen);
+  ABG.hatVerteiler=e.hatVerteiler;
 
-  p.rows.forEach((r,idx)=>{
-    if(!r.nachname||!r.vorname) return;
-    const schluessel = r.guid || localPart(r.vorname,r.nachname);
-    const lokal = state.ausnahmen[schluessel] || localPart(r.vorname,r.nachname);
-    const upn = lokal+'@'+c.emailDomain;
-    const person = {roh: ABG.zeilen[idx]||'', guid:r.guid||'', klasse:r.klasse||'',
-                    vorname:r.vorname, nachname:r.nachname,
-                    name:(firstGiven(r.vorname)+' '+r.nachname).trim(), upn};
-    if(!r.guid){ ohneKennung.push(person); }
-    let konto = (r.guid && nachKennung[r.guid]) || nachUpn[upn.toLowerCase()] || null;
-    if(!konto){ neu.push(person); return; }
-    person.konto=konto;
-    if(konto.kennung) gesehen[konto.kennung]=true;
+  /* Vorauswahl: Klassenwechsel alle an, Neuzugänge mit ähnlichem Konto aus,
+     Abgänge mit Verteiler an (in abgKern), Unbekannte aus */
+  e.neu.forEach(n=>{ n.roh=ABG.zeilen[n.idx]||''; n.an = !abgAehnlich(n).length; });
+  e.wechsel.forEach(w=>{ w.an=true; });
+  ABG.erg=e;
 
-    const soll=ABG.hatVerteiler ? abgSollVerteiler(person.klasse) : null;
-    if(soll){
-      const ist=konto.verteiler.map(x=>x.toLowerCase());
-      if(ist.indexOf(soll.toLowerCase())<0){
-        wechsel.push({...person, von:konto.verteiler.slice(), nach:soll});
-      }
-    }
-    if(konto.anzeigename && konto.anzeigename.trim() && konto.anzeigename.trim()!==person.name){
-      namen.push({...person, kontoName:konto.anzeigename});
-    }
-    ok.push(person);
-  });
-
-  /* Praktikums-Kennungen stehen in keinem SchilD-Export und wären sonst
-     bei jedem Lauf ein Abgang. */
-  const abgang = bestand.filter(b=>b.kennung && !gesehen[b.kennung] && !/^PRAKT-/i.test(String(b.kennung).trim()));
-
-  /* Vorauswahl: Klassenwechsel alle an, Neuzugänge mit ähnlichem Konto aus */
-  wechsel.forEach(w=>{ w.an=true; });
-  neu.forEach(n=>{ n.an = !abgAehnlich(n).length; });
-  ABG.erg={neu, wechsel, namen, abgang, ok, ohneKennung, gesamt:p.rows.length};
+  /* Für die Erinnerung auf der Startseite: wann zuletzt geprüft */
+  if(e.hatVerteiler){
+    STAND.abgleich={wann:new Date().toISOString(), wer:(($('werBinIch')||{}).value||'').trim(),
+      abweichungen: e.wechsel.length + e.abgang.filter(a=>a.verteiler.length).length + e.fremd.length
+                    + e.ohneZiel.length + e.neu.length};
+    standSichern();
+    startseiteZeichnen();
+  }
   abgleichZeichnen();
 }
 
@@ -7206,43 +7375,59 @@ function abgAehnlich(p){
 }
 
 /* ---------- Auswahl ---------- */
+function abgListe(art){
+  const e=ABG.erg; if(!e) return [];
+  return ({neu:e.neu, wechsel:e.wechsel, abgang:e.abgang, fremd:e.fremd})[art] || [];
+}
 function abgWahl(art,i,an){
-  const e=ABG.erg; if(!e) return;
-  const liste = art==='neu' ? e.neu : e.wechsel;
+  const liste=abgListe(art);
   if(liste[i]) liste[i].an=an;
   abgKnoepfe();
 }
 function abgAlle(art,an){
-  const e=ABG.erg; if(!e) return;
-  const liste = art==='neu' ? e.neu : e.wechsel;
-  liste.forEach(x=>x.an=an);
-  document.querySelectorAll('input[data-wahl="'+art+'"]').forEach(el=>{ el.checked=an; });
+  abgListe(art).forEach(x=>{ if(art!=='abgang' || x.verteiler.length) x.an=an; });
+  document.querySelectorAll('input[data-wahl="'+art+'"]').forEach(el=>{ if(!el.disabled) el.checked=an; });
   abgKnoepfe();
 }
-function abgGewaehlt(art){
-  const e=ABG.erg; if(!e) return [];
-  return (art==='neu'? e.neu : e.wechsel).filter(x=>x.an);
-}
+function abgGewaehlt(art){ return abgListe(art).filter(x=>x.an); }
 function abgKnoepfe(){
-  const n=abgGewaehlt('neu').length, w=abgGewaehlt('wechsel').length;
+  const n=abgGewaehlt('neu').length, w=abgGewaehlt('wechsel').length,
+        a=abgGewaehlt('abgang').filter(x=>x.verteiler.length).length, f=abgGewaehlt('fremd').length;
   const bn=$('btnNeu'), bw=$('btnWechsel');
-  if(bn){ bn.textContent=n+' ausgewählte Neuzugänge in den Reiter Schüler laden'; bn.disabled=!n; }
-  if(bw){ bw.textContent='Korrekturskript für '+w+' Ausgewählte herunterladen'; bw.disabled=!w; }
+  if(bn){ bn.textContent=n+' ausgewählte Neuzugänge in den Reiter Zugänge laden'; bn.disabled=!n; }
+  if(bw){
+    const teile=[];
+    if(w) teile.push(w+' Klassenwechsel');
+    if(a) teile.push(a+' Abgänge');
+    if(f) teile.push(f+' Unbekannte');
+    bw.textContent = teile.length ? 'Korrekturskript herunterladen: '+teile.join(', ') : 'Korrekturskript: nichts ausgewählt';
+    bw.disabled=!teile.length;
+  }
 }
 
 /* ---------- Darstellung ---------- */
 function abgleichZeichnen(){
   const e=ABG.erg; if(!e) return;
+  const abgMitV=e.abgang.filter(a=>a.verteiler.length).length;
   $('abgMeld').innerHTML=
     '<div class="box ok"><b>'+e.gesamt+' Zeilen aus SchilD gegen '+ABG.bestand.length+' Konten geprüft.</b><br>'
-    +'Neu: '+e.neu.length+' · Klassenwechsel: '+e.wechsel.length+' · Namensabweichung: '+e.namen.length
-    +' · nicht mehr im Export: '+e.abgang.length+' · unverändert: '+(e.ok.length-e.wechsel.length)+'</div>'
+    +'Neu: '+e.neu.length+' · Klassenwechsel und falsche Verteiler: '+e.wechsel.length+' · Namensabweichung: '+e.namen.length
+    +' · nicht mehr im Export: '+e.abgang.length+(abgMitV?' (davon '+abgMitV+' noch im Verteiler)':'')
+    +' · unbekannt im Verteiler: '+e.fremd.length
+    +' · ohne Verteiler-Zuordnung: '+e.ohneZiel.length+'</div>'
     +(e.ohneKennung.length?'<div class="box warn">'+e.ohneKennung.length+' SchilD-Zeilen haben keine GUID. '
       +'Sie werden nur über die Adresse erkannt und tauchen bei den Abgängen nie auf.</div>':'')
-    +(ABG.hatVerteiler?'':'<div class="box err"><b>Die Bestandsdatei enthält keine Verteilerangaben.</b><br>'
-      +'Fenster 2 des Leseskripts ist nicht gelaufen oder die Datei fehlt. Neuzugänge, Namensabweichungen und Abgänge stimmen trotzdem, '
-      +'<b>Klassenwechsel werden aber nicht geprüft</b> und bleiben leer. Sonst würde jeder Schüler als Wechsler gemeldet.<br>'
-      +'Verbinde Exchange und lass das Leseskript erneut laufen, dann ist die Datei vollständig.</div>');
+    +(e.hatVerteiler?'':'<div class="box err"><b>Die Verteilerdatei fehlt.</b><br>'
+      +'Fenster 2 des Leseskripts ist nicht gelaufen oder die Datei ist nicht geladen. Neuzugänge, Namensabweichungen und Abgänge stimmen trotzdem, '
+      +'<b>Klassenwechsel und Verteiler werden aber nicht geprüft</b>. Sonst würde jedes Kind als Wechsler gemeldet.<br>'
+      +'Verbinde Exchange und lass Fenster 2 erneut laufen, dann ist der Abgleich vollständig.</div>')
+    +(e.hatVerteiler && !e.gruppenBekannt?'<div class="box warn">Die Verteilerdatei stammt von einer älteren Fassung des Leseskripts. '
+      +'Die Übersicht je Klasse und die Liste der unbekannten Mitglieder fehlen deshalb. Lass Fenster 2 einmal neu laufen.</div>':'')
+    +(e.gruppenBekannt && !e.kollegium?'<div class="box warn"><b>Lehrkräfte werden nur unvollständig erkannt.</b> '
+      +'In der Verteilerdatei fehlen die Mitglieder des Kollegiumsverteilers. Ohne sie erkennt das Werkzeug Lehrkräfte nur an der Position im Konto, '
+      +'und die fehlt bei älteren Lehrerkonten. Diese landen dann bei „Unbekannt im Verteiler“. '
+      +'Abhilfe: Fenster 2 mit dem aktuellen Befehl neu laufen lassen; die Adresse des Kollegiumsverteilers steht in den Einstellungen.</div>'
+      :(e.kollegium?'<div class="hint">Lehrkräfte erkannt über den Kollegiumsverteiler ('+e.kollegium+' Adressen).</div>':''));
 
   const t=(titel, hinweis, zeilen, spalten, leer)=>
     '<details'+(zeilen.length?' open':'')+' style="margin-bottom:14px">'
@@ -7255,15 +7440,61 @@ function abgleichZeichnen(){
          +'</tbody></table></div>'
        : '<div class="muted">'+esc(leer)+'</div>')
     +'</details>';
+  const wahl=(art)=>['',(z,i)=>'<input type="checkbox" data-wahl="'+art+'" '+(z.an?'checked':'')
+    +' onchange="abgWahl(\''+art+'\','+i+',this.checked)">'];
+  const knoepfe=(art,mitWahl)=>'<div class="flexbtns" style="margin:-6px 0 18px">'
+    +(mitWahl?'<button class="btn sec sm" onclick="abgAlle(\''+art+'\',true)">alle</button>'
+      +'<button class="btn sec sm" onclick="abgAlle(\''+art+'\',false)">keine</button>':'')
+    +'<button class="btn sec" onclick="abgCsv(\''+art+'\')">Liste als CSV</button></div>';
+  const zahl=(n,farbe)=> n ? '<b style="color:var(--'+farbe+')">'+n+'</b>' : '<span class="muted">0</span>';
 
   let h='';
+
+  /* F: Übersicht je Klasse */
+  if(e.hatVerteiler && e.stat.length){
+    const ZUST={ok:'<span style="color:var(--ok)">✓ passt</span>',
+                abweichung:'<span style="color:var(--warn)">⚠ prüfen</span>',
+                fehlt:'<span style="color:var(--err)">Verteiler fehlt</span>',
+                leer:'<span class="muted">keine Schüler laut SchilD</span>'};
+    const offen=e.stat.filter(s=>s.zustand!=='ok').length;
+    h+='<details open style="margin-bottom:14px">'
+      +'<summary style="cursor:pointer;font-weight:650;font-size:14px">Übersicht je Klasse · '
+      +(offen? offen+' von '+e.stat.length+' prüfen' : 'alle '+e.stat.length+' passen')+'</summary>'
+      +'<div class="hint" style="margin:6px 0">Ein Blick genügt: Steht überall ✓, passen SchilD und Klassenverteiler zusammen. '
+      +'<b>fehlen</b>: Kinder laut SchilD, die nicht im Verteiler stehen · <b>ohne Konto</b>: Kinder ohne MS365-Konto (siehe Neuzugänge) · '
+      +'<b>zu viel</b>: Kinder, die in einen anderen Verteiler gehören oder abgegangen sind · '
+      +'<b>unklar</b>: weder Kind laut SchilD noch Lehrkraft. Lehrkräfte (Klassenleitungen) werden nur gezählt.</div>'
+      +'<div class="tablewrap"><table><thead><tr><th>Verteiler</th><th>laut SchilD</th><th>im Verteiler</th>'
+      +'<th>davon Lehrkräfte</th><th>fehlen</th><th>ohne Konto</th><th>zu viel</th><th>unklar</th><th>Stand</th></tr></thead><tbody>'
+      +e.stat.map(s=>'<tr><td><b>'+esc(s.name)+'</b></td><td>'+s.schild+'</td>'
+        +'<td>'+(s.vorhanden||!e.gruppenBekannt?(e.gruppenBekannt?s.mitglieder:'<span class="muted">?</span>'):'<span class="muted">–</span>')+'</td>'
+        +'<td>'+(e.gruppenBekannt?s.lehr:'<span class="muted">?</span>')+'</td>'
+        +'<td>'+zahl(s.fehlt,'warn')+'</td><td>'+zahl(s.ohneKonto,'warn')+'</td>'
+        +'<td>'+zahl(s.zuviel,'warn')+'</td><td>'+zahl(s.unklar,'warn')+'</td>'
+        +'<td>'+ZUST[s.zustand]+'</td></tr>').join('')
+      +'</tbody></table></div>'
+      +(e.stat.some(s=>s.zustand==='fehlt')?'<div class="box warn" style="margin-top:8px"><b>Mindestens ein Verteiler fehlt.</b> '
+        +'Leg ihn zuerst an (Reiter Zugänge, Skript Klassenverteiler), sonst bricht das Korrekturskript für diese Klasse ab.</div>':'')
+      +'</details>';
+  }
+
+  /* D: Kinder ohne Verteiler-Zuordnung */
+  if(e.ohneZiel.length){
+    h+=t('Ohne Verteiler-Zuordnung', '<b style="color:var(--warn)">Diese Kinder werden nicht geprüft.</b> '
+        +'Ihre Klasse passt zu keinem Verteiler. Meist fehlt in den Einstellungen das Abiturjahr für EP, Q1 oder Q2, '
+        +'oder in SchilD steht eine ungewöhnliche Klasse. Erst klären, dann neu vergleichen.',
+        e.ohneZiel, [['Name',z=>esc(z.name)],['Klasse laut SchilD',z=>esc(z.klasse)||'<span class="muted">leer</span>'],
+                     ['jetzt im Verteiler',z=> z.konto&&z.konto.verteiler.length?esc(z.konto.verteiler.join(', ')):'<span class="muted">in keinem</span>'],
+                     ['Grund',z=>esc(abgOhneZielGrund(z.klasse))]], '');
+  }
+
   const verdacht=e.neu.filter(z=>abgAehnlich(z).length);
   h+=t('Neuzugänge', 'Im Export vorhanden, aber kein Konto gefunden – weder über die Kennung noch über die Adresse. '
-      +'Über den Knopf darunter übernimmst du genau diese Personen in den Reiter Schüler und erzeugst dort Konten, Passwörter und Briefe.'
+      +'Über den Knopf darunter übernimmst du genau diese Personen in den Reiter Zugänge und erzeugst dort Konten, Passwörter und Briefe.'
       +(verdacht.length? '<br><b style="color:var(--warn)">Achtung: Bei '+verdacht.length+' davon gibt es ein ähnlich benanntes Konto.</b> '
         +'Das sind vermutlich keine Neuzugänge, sondern Personen, deren Kennung noch fehlt und deren Adresse abweicht. '
         +'Diese sind bereits abgewählt – prüf die letzte Spalte, bevor du sie doch anlegst.' : ''),
-      e.neu, [['',(z,i)=>'<input type="checkbox" data-wahl="neu" '+(z.an?'checked':'')+' onchange="abgWahl(\'neu\','+i+',this.checked)">'],
+      e.neu, [wahl('neu'),
               ['Name',z=>esc(z.name)],['Klasse',z=>esc(z.klasse)],['künftige Adresse',z=>esc(z.upn)],
               ['ähnliches Konto vorhanden?',z=>{
                  const a=abgAehnlich(z);
@@ -7279,24 +7510,20 @@ function abgleichZeichnen(){
       +'<button class="btn sec" onclick="abgCsv(\'neu\')">Liste als CSV</button></div>';
   }
 
-  h+=t('Klassenwechsel', ABG.hatVerteiler
-      ? 'SchilD nennt eine andere Klasse, als der Verteiler sagt – Wiederholer, Nachprüfungen, Umstufungen. '
-        +'Das Skript darunter entfernt aus dem alten Verteiler und nimmt in den neuen auf. '
+  const ARTTEXT={'Wechsel':'Klasse gewechselt','fehlt':'in keinem Verteiler','zusätzlich':'zusätzlich im falschen'};
+  h+=t('Klassenwechsel und falsche Verteiler', e.hatVerteiler
+      ? 'SchilD nennt eine andere Klasse, als die Verteiler sagen – Wiederholer, Nachprüfungen, Umstufungen. '
+        +'Dazu Kinder, die in gar keinem Verteiler stehen, und Kinder, die <b>zusätzlich</b> noch in einem falschen stecken. '
+        +'Das Korrekturskript unten entfernt aus den falschen Verteilern und nimmt in den richtigen auf. '
         +'Hak ab, was übernommen werden soll – nicht jede Abweichung in SchilD ist richtig. Vorausgewählt sind alle.'
       : '<b style="color:var(--err)">Nicht geprüft.</b> Es fehlt die Datei <code>MS365_Verteiler.csv</code> aus Fenster 2.',
-      e.wechsel, [['',(z,i)=>'<input type="checkbox" data-wahl="wechsel" '+(z.an?'checked':'')+' onchange="abgWahl(\'wechsel\','+i+',this.checked)">'],
+      e.wechsel, [wahl('wechsel'),
                   ['Name',z=>esc(z.name)],['Adresse',z=>esc(z.konto?z.konto.upn:z.upn)],
-                  ['bisher im Verteiler',z=> z.von.length?esc(z.von.join(', ')):'<span class="muted">in keinem</span>'],
-                  ['laut SchilD',z=>'<b>'+esc(z.nach)+'</b>']],
+                  ['Art',z=>esc(ARTTEXT[z.art]||z.art)],
+                  ['raus aus',z=> z.von.length?esc(z.von.join(', ')):'<span class="muted">–</span>'],
+                  ['rein in (laut SchilD)',z=> z.drin?'<span class="muted">'+esc(z.nach)+' (schon drin)</span>':'<b>'+esc(z.nach)+'</b>']],
       'Keine Klassenwechsel.');
-  if(e.wechsel.length){
-    h+='<div class="flexbtns" style="margin:-6px 0 18px">'
-      +'<button class="btn" id="btnWechsel" onclick="abgWechselDl()"></button>'
-      +'<button class="btn sec sm" onclick="abgAlle(\'wechsel\',true)">alle</button>'
-      +'<button class="btn sec sm" onclick="abgAlle(\'wechsel\',false)">keine</button>'
-      +'<button class="btn sec" onclick="abgCsv(\'wechsel\')">Liste als CSV</button></div>'
-      +'<div id="cmdsW"></div>';
-  }
+  if(e.wechsel.length) h+=knoepfe('wechsel',true);
 
   h+=t('Namensabweichungen', 'Der Name im Konto weicht von SchilD ab – Heirat, Korrektur, Rufname. '
       +'Das Werkzeug ändert hier nichts: Eine Adressänderung bricht Anmeldungen und gehört in eure Hand.',
@@ -7305,31 +7532,55 @@ function abgleichZeichnen(){
   if(e.namen.length) h+='<div class="flexbtns" style="margin:-6px 0 18px"><button class="btn sec" onclick="abgCsv(\'namen\')">Liste als CSV</button></div>';
 
   h+=t('Nicht mehr im Export', 'Konten mit SchilD-Kennung, die im aktuellen Export fehlen – vermutlich abgegangen. '
-      +'Es wird nichts abgeschaltet. Prüft die Liste und entscheidet selbst; Befehle zum Deaktivieren stehen im Reiter Nachlauf.',
-      e.abgang, [['Name',z=>esc(z.anzeigename)],['Adresse',z=>esc(z.upn)],
+      +'<b>Angehakt = das Korrekturskript nimmt sie aus ihren Klassenverteilern heraus.</b> Vorausgewählt sind alle, die noch in einem Verteiler stehen. '
+      +'Das Konto selbst bleibt unberührt; Befehle zum Deaktivieren stehen im Reiter Werkzeugkasten.',
+      e.abgang, [['',(z,i)=> z.verteiler.length
+                    ? '<input type="checkbox" data-wahl="abgang" '+(z.an?'checked':'')+' onchange="abgWahl(\'abgang\','+i+',this.checked)">'
+                    : '<input type="checkbox" data-wahl="abgang" disabled title="in keinem Klassenverteiler">'],
+                 ['Name',z=>esc(z.anzeigename)],['Adresse',z=>esc(z.upn)],
                  ['Verteiler',z=> z.verteiler.length?esc(z.verteiler.join(', ')):'<span class="muted">keiner</span>'],
                  ['aktiv',z=> z.aktiv?'ja':'<span style="color:var(--muted)">nein</span>']],
       'Keine Abgänge.');
-  if(e.abgang.length) h+='<div class="flexbtns" style="margin:-6px 0 18px"><button class="btn sec" onclick="abgCsv(\'abgang\')">Liste als CSV</button></div>';
+  if(e.abgang.length) h+=knoepfe('abgang',abgMitV>0);
+
+  if(e.gruppenBekannt){
+    h+=t('Unbekannt im Verteiler', 'Mitglieder eines Klassenverteilers, die weder laut SchilD in diese Klasse gehören noch Lehrkraft sind. '
+        +'Lehrkräfte erkennt das Werkzeug am Kollegiumsverteiler, an der Position im Konto (Lehrkraft, Referendar) oder an der Lehrerliste in der Karte Klassenleitungen. '
+        +'<b>Nichts ist vorausgewählt.</b> Hak nur an, was wirklich heraus soll.',
+        e.fremd, [wahl('fremd'),
+                  ['Verteiler',z=>'<b>'+esc(z.gruppe)+'</b>'],['Adresse',z=>esc(z.adresse)],['Name',z=>esc(z.name)||'<span class="muted">–</span>'],
+                  ['Konto',z=> z.konto ? (z.position?esc(z.position):'<span class="muted">ohne Position</span>')+(z.kennung?' · Kennung '+esc(z.kennung):'')
+                                       : '<span class="muted">kein Konto im Schulmandanten</span>']],
+        'Keine unbekannten Mitglieder.');
+    if(e.fremd.length) h+=knoepfe('fremd',true);
+  }
+
+  if(e.hatVerteiler && (e.wechsel.length || abgMitV || e.fremd.length)){
+    h+='<div class="box" style="margin:6px 0 10px"><b>Korrekturskript</b> – fasst alles Angehakte aus den drei Listen oben zusammen: '
+      +'Klassenwechsel und falsche Verteiler, Abgänge, Unbekannte. Es ändert nur Verteiler, keine Konten.</div>'
+      +'<div class="flexbtns" style="margin:0 0 10px"><button class="btn" id="btnWechsel" onclick="abgWechselDl()"></button></div>'
+      +'<div id="cmdsW"></div>';
+  }
 
   $('abgErg').innerHTML=h;
   const ec=$('abgErgCard'); if(ec){ ec.style.display='block'; ec.classList.remove('zu'); if(typeof nummeriereKarten==='function') nummeriereKarten(); }
   abgKnoepfe();
-  if(e.wechsel.length){
+  if($('cmdsW')){
     const b=psBefehle('6_Klassenwechsel*.ps1');
     $('cmdsW').innerHTML='<details style="margin-bottom:16px"><summary style="cursor:pointer;font-weight:600;font-size:13.5px">So führst du das Skript aus</summary>'
       + codeBlock('1. Simulation', b.simulation) + codeBlock('2. Echt ausführen', b.live) + '</details>';
   }
 }
 
-/* ---------- Neuzugänge an den Schüler-Reiter übergeben ---------- */
+/* ---------- Neuzugänge an den Reiter Zugänge übergeben ---------- */
 function abgNeuUebernehmen(){
   const e=ABG.erg; if(!e||!e.neu.length) return;
   const liste = abgGewaehlt('neu');
   if(!liste.length){ alert('Nichts ausgewählt.'); return; }
   const text=[ABG.kopf].filter(Boolean).concat(liste.map(n=>n.roh).filter(Boolean)).join('\n');
   if(!text.trim()){ alert('Die Originalzeilen ließen sich nicht zuordnen.'); return; }
-  zeigeReiter(4);
+  if(state.mode!=='schueler') modusSetzen('schueler');
+  zeigeReiter(1);
   const inp=$('input'); if(inp) inp.value=text;
   const f=$('jgFilter'); if(f) f.value='alle';
   if(typeof run==='function') run();
@@ -7343,28 +7594,43 @@ function abgCsv(art){
   let kopf, zeilen;
   if(art==='neu'){ kopf=['Name','Klasse','KuenftigeAdresse','Guid'];
     zeilen=e.neu.map(z=>[z.name,z.klasse,z.upn,z.guid]); }
-  else if(art==='wechsel'){ kopf=['Name','Adresse','BisherVerteiler','LautSchilD','Guid'];
-    zeilen=e.wechsel.map(z=>[z.name,(z.konto?z.konto.upn:z.upn),z.von.join(' '),z.nach,z.guid]); }
+  else if(art==='wechsel'){ kopf=['Name','Adresse','Art','RausAus','LautSchilD','Guid'];
+    zeilen=e.wechsel.map(z=>[z.name,(z.konto?z.konto.upn:z.upn),z.art,z.von.join(' '),z.nach,z.guid]); }
   else if(art==='namen'){ kopf=['LautSchilD','LautKonto','Adresse','Klasse','Guid'];
     zeilen=e.namen.map(z=>[z.name,z.kontoName,z.konto.upn,z.klasse,z.guid]); }
+  else if(art==='fremd'){ kopf=['Verteiler','Adresse','Name','Position','Kennung'];
+    zeilen=e.fremd.map(z=>[z.gruppe,z.adresse,z.name,z.position,z.kennung]); }
   else { kopf=['Name','Adresse','Verteiler','Aktiv','Kennung'];
     zeilen=e.abgang.map(z=>[z.anzeigename,z.upn,z.verteiler.join(' '),z.aktiv?'ja':'nein',z.kennung]); }
   const csv=[kopf.map(q).join(';')].concat(zeilen.map(r=>r.map(q).join(';'))).join('\r\n');
   download('Abgleich_'+art+'_'+new Date().toISOString().slice(0,10)+'.csv', csv);
 }
 
-/* ---------- Klassenwechsel-Skript ---------- */
+/* ---------- Korrekturskript: Klassenwechsel, Abgänge, Unbekannte ---------- */
 function abgWechselDl(){ download('6_Klassenwechsel.ps1', abgWechselSkript()); }
+function abgKorrekturen(){
+  const e=ABG.erg||{};
+  const liste=[];
+  (e.wechsel||[]).filter(x=>x.an).forEach(w=>liste.push({adresse:(w.konto?w.konto.upn:w.upn), name:w.name, raus:w.von.slice(), rein:w.nach}));
+  (e.abgang||[]).filter(x=>x.an && x.verteiler.length).forEach(a=>liste.push({adresse:a.upn, name:a.anzeigename||a.upn, raus:a.verteiler.slice(), rein:''}));
+  const fremd={};
+  (e.fremd||[]).filter(x=>x.an).forEach(f=>{
+    if(!fremd[f.adresse]){ fremd[f.adresse]={adresse:f.adresse, name:f.name||f.adresse, raus:[], rein:''}; liste.push(fremd[f.adresse]); }
+    fremd[f.adresse].raus.push(f.gruppe);
+  });
+  return liste;
+}
 function abgWechselSkript(){
-  const gewaehlt=abgGewaehlt('wechsel');
+  const korr=abgKorrekturen();
   const dom=($('emailDomain')&&$('emailDomain').value.trim())||'fbg.schwerte.de';
   const qq=s=>"'"+String(s==null?'':s).replace(/'/g,"''")+"'";
   const L=[];
-  L.push('# Klassenwechsel in den Verteilern nachziehen');
+  L.push('# Klassenverteiler korrigieren: Klassenwechsel, Abgaenge, Unbekannte');
   L.push('# erzeugt am '+new Date().toLocaleString('de-DE'));
   L.push('#');
   L.push('# Quelle: Abgleich von SchilD gegen den ausgelesenen Ist-Zustand.');
-  L.push('# Betroffen sind Wiederholer, nicht bestandene Nachpruefungen und Umstufungen.');
+  L.push('# Betroffen sind Wiederholer, Nachpruefungen, Umstufungen, Kinder in falschen');
+  L.push('# Verteilern, Abgaenge und von Hand angehakte unbekannte Mitglieder.');
   L.push('# Enthalten sind nur die im Werkzeug ausgewaehlten Faelle.');
   L.push('#');
   L.push('# Es wird nur die Verteilerzugehoerigkeit geaendert. Konten, Passwoerter und');
@@ -7391,11 +7657,11 @@ function abgWechselSkript(){
   L.push('    Where-Object { $_.PrimarySmtpAddress -eq (Mail $n) } | Select-Object -First 1');
   L.push('}');
   L.push('');
+  L.push('# Rein leer = nur entfernen (Abgang oder unbekanntes Mitglied)');
   L.push('$wechsel = @(');
-  gewaehlt.forEach(w=>{
-    const adr=(w.konto?w.konto.upn:w.upn);
-    L.push('  [pscustomobject]@{ Adresse='+qq(adr)+'; Name='+qq(w.name)
-      +'; Raus=@('+w.von.map(qq).join(',')+'); Rein='+qq(w.nach)+' }');
+  korr.forEach(w=>{
+    L.push('  [pscustomobject]@{ Adresse='+qq(w.adresse)+'; Name='+qq(w.name)
+      +'; Raus=@('+w.raus.map(qq).join(',')+'); Rein='+qq(w.rein)+' }');
   });
   L.push(')');
   L.push('Write-Host ("Zu korrigieren: {0}" -f $wechsel.Count)');
@@ -7417,6 +7683,7 @@ function abgWechselSkript(){
   L.push('    }');
   L.push('    $raus++');
   L.push('  }');
+  L.push('  if(-not $w.Rein){ continue }');
   L.push('  $z = Get-Grp $w.Rein');
   L.push('  if(-not $z){ Write-Host ("  ! Zielverteiler fehlt: {0} - bitte zuerst anlegen" -f $w.Rein) -ForegroundColor Yellow; $problem++; continue }');
   L.push('  $drin = Get-DistributionGroupMember -Identity $z.PrimarySmtpAddress -ResultSize Unlimited -ErrorAction SilentlyContinue |');
@@ -7625,6 +7892,64 @@ function stNamen(){
   stAdd('Namensregeln','Mehrere Vornamen und Nachnamen werden gemeldet', w2.length===2, w2.join(', '));
 }
 
+/* ---------- E: Klassenabgleich mit erfundenen Daten ---------- */
+function stAbgleich(){
+  const d='test.invalid';
+  const k=(kennung,upn,position,extra)=>Object.assign({kennung, upn:upn+'@'+d, mail:'', anzeigename:'', vorname:'', nachname:'',
+    aktiv:true, lizenzen:1, position:position||'', verteiler:[]}, extra||{});
+  const bestand=[
+    k('{T1}','tom.ahorn','Schüler'),          /* sitzt in 05a, gehört nach 06a */
+    k('{T2}','tina.birke','Schüler'),         /* in 06a und zusätzlich in 05b */
+    k('{T3}','tim.eiche','Schüler'),          /* nicht mehr in SchilD, noch in 06a */
+    k('','linde','Lehrkraft'),                /* Klassenleitung in 06a */
+    k('','ulme.extern',''),                   /* unbekannt in 06a */
+    k('','weide',''),                         /* Lehrkraft ohne Position, nur im Kollegiumsverteiler */
+    k('{T6}','tara.weide','Schüler'),         /* Klasse ohne Verteilerregel */
+    k('{T7}','theo.ahorn','Schüler',{mail:'t.ahorn@'+d})  /* Verteiler kennt nur die Mailadresse */
+  ];
+  const vert=abgLiesVerteiler(['Adresse;Verteiler;Name',
+    'tom.ahorn@'+d+';05a;','tina.birke@'+d+';06a;','tina.birke@'+d+';05b;','tim.eiche@'+d+';06a;',
+    'linde@'+d+';06a;','ulme.extern@'+d+';06a;Ulme','weide@'+d+';06a;','t.ahorn@'+d+';06b;',';07c;',
+    'weide@'+d+';#Kollegium;Weide'].join('\n'));
+  const rows=[
+    {guid:'{T1}',vorname:'Tom',nachname:'Ahorn',klasse:'06a'},
+    {guid:'{T2}',vorname:'Tina',nachname:'Birke',klasse:'06a'},
+    {guid:'{T6}',vorname:'Tara',nachname:'Weide',klasse:'XY'},
+    {guid:'{T7}',vorname:'Theo',nachname:'Ahorn',klasse:'06b'},
+    {guid:'{T8}',vorname:'Till',nachname:'Linde',klasse:'06a'}
+  ];
+  const e=abgKern(bestand, vert, rows, d, {});
+  const w=id=>e.wechsel.find(x=>x.guid===id);
+  abgAnleitungZeichnen();
+  const ol=document.getElementById('abgAnleitung');
+  stAdd('Klassenabgleich','Karte „So gehst du vor“ zeigt die Anleitung aus dem Schritt',
+    !!ol && ol.children.length===(schritt('abgleich').anleitung||[]).length && ol.children.length>0);
+  stAdd('Klassenabgleich','Leerer Verteiler wird erkannt', !!vert.gruppen['07c']);
+  stAdd('Klassenabgleich','Kollegiumsverteiler zählt nicht als Klasse', !vert.gruppen['#kollegium'] && !!vert.kollegium['weide@'+d]);
+  stAdd('Klassenabgleich','Lehrkraft ohne Position wird über den Kollegiumsverteiler erkannt', !e.fremd.some(x=>/^weide@/.test(x.adresse)));
+  stAdd('Klassenabgleich','Klassenwechsel wird gemeldet', !!w('{T1}') && w('{T1}').nach==='06a' && w('{T1}').von.join()==='05a');
+  stAdd('Klassenabgleich','Zusätzlich im falschen Verteiler wird gemeldet', !!w('{T2}') && w('{T2}').drin && w('{T2}').von.join()==='05b');
+  stAdd('Klassenabgleich','Mailadresse statt UPN führt nicht zu falschem Wechsel', !w('{T7}'));
+  const ab=e.abgang.find(x=>x.kennung==='{T3}');
+  stAdd('Klassenabgleich','Abgang im Verteiler ist zum Entfernen vorgewählt', !!ab && ab.an && ab.verteiler.join()==='06a');
+  stAdd('Klassenabgleich','Lehrkraft wird nicht als unbekannt gemeldet', !e.fremd.some(x=>/^linde@/.test(x.adresse)));
+  stAdd('Klassenabgleich','Unbekanntes Mitglied wird gemeldet, nicht vorgewählt',
+    e.fremd.length===1 && /^ulme\.extern@/.test(e.fremd[0].adresse) && !e.fremd[0].an, e.fremd.map(x=>x.adresse).join(', '));
+  stAdd('Klassenabgleich','Kind ohne Verteilerregel wird gemeldet', e.ohneZiel.length===1 && e.ohneZiel[0].guid==='{T6}');
+  const s6=e.stat.find(x=>x.name==='06a')||{};
+  stAdd('Klassenabgleich','Übersicht je Klasse zählt richtig',
+    s6.schild===3 && s6.fehlt===1 && s6.ohneKonto===1 && s6.lehr===2 && s6.unklar===1 && s6.zuviel===1 && s6.zustand==='abweichung',
+    JSON.stringify(s6));
+  const aAlt=ABG.erg;
+  try{
+    e.wechsel.forEach(x=>x.an=true);
+    ABG.erg=e;
+    const txt=abgWechselSkript();
+    stAdd('Klassenabgleich','Korrekturskript entfernt Abgänge, lässt Unbekannte ohne Haken in Ruhe',
+      txt.indexOf('tim.eiche@'+d)>=0 && txt.indexOf('ulme.extern@'+d)<0);
+  } finally { ABG.erg=aAlt; }
+}
+
 /* ---------- Ausführen und anzeigen ---------- */
 function selbsttest(nurAufbau){
   ST=[];
@@ -7632,6 +7957,7 @@ function selbsttest(nurAufbau){
   if(!nurAufbau){
     try{ stSkripte(); }catch(e){ stAdd('Skripte','Prüfung selbst lief durch', false, e.message); }
     try{ stNamen(); }catch(e){ stAdd('Namensregeln','Prüfung selbst lief durch', false, e.message); }
+    try{ stAbgleich(); }catch(e){ stAdd('Klassenabgleich','Prüfung selbst lief durch', false, e.message); }
   }
   return ST;
 }

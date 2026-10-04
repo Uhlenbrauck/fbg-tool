@@ -9,6 +9,7 @@ Diese Datei liest Claude zu Beginn jeder Sitzung automatisch. Sie ersetzt den la
 - **PowerShell-Befehle immer vollständig und kopierbar ausgeben**, nie „zweiter Lauf ohne Parameter …“.
 - Sagt er „ändere noch nichts“ oder „leg mir erst die Vorschläge vor“: erst eine Liste vorlegen, dann auf sein Okay warten.
 - Entscheidungen über SchILD-Rückimporte trifft er nicht allein: „Alles muss ich erst abklären.“
+- GitHub: Kai ist Anfänger. Claude arbeitet auf dem eigenen Branch und pusht nie direkt nach `main`. Fertige Pakete gehen gesammelt als **ein Pull Request** raus; Kai klickt auf GitHub „Merge“. Schritte dafür immer kurz erklären.
 
 ## Datenschutz (wichtigste Regel)
 

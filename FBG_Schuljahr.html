@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>FBG Schuljahr – Konten und Verteiler v4.60</title>
+<title>FBG Schuljahr – Konten und Verteiler v4.61</title>
 <style>
 
   :root{
@@ -439,7 +439,7 @@ th.sortbar:hover{color:var(--accent)}
 <body>
 <header><div class="headwrap">
   <div style="flex:1;min-width:260px">
-    <h1>FBG Schuljahr <span class="vers">v4.60</span></h1>
+    <h1>FBG Schuljahr <span class="vers">v4.61</span></h1>
     <p>Konten, Verteiler und Importdateien für den Schuljahreswechsel. Alles läuft lokal, ohne Internetverbindung.</p>
   </div>
   <div class="suchbox">
@@ -2488,7 +2488,7 @@ function vorlageZurueck(){
 function vorlageDl(){
   const v=vorlageAktiv(); if(!v) return;
   const name='Brieftext_'+String(v.name).replace(/[^A-Za-z0-9äöüÄÖÜß ._-]/g,'').replace(/\s+/g,'_')+'.txt';
-  speichereDatei(name, v.text, false);
+  download(name, v.text);
 }
 function vorlageDateiLaden(el){
   const f=el.files&&el.files[0]; if(!f) return;
@@ -5091,7 +5091,7 @@ function laufbuchDl(){
     });
   });
   if(z.length<5) z.push('Bisher ist nichts vermerkt.');
-  speichereDatei('Laufbuch_'+(STAND.schuljahr||'Schuljahr').replace(/[^0-9A-Za-z]/g,'-')+'.md', z.join('\n'), false);
+  download('Laufbuch_'+(STAND.schuljahr||'Schuljahr').replace(/[^0-9A-Za-z]/g,'-')+'.md', z.join('\n'));
 }
 
 /* ---------- Benutzerhandbuch ---------- */
@@ -5244,7 +5244,7 @@ function handbuchDl(){
 
   const html='<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8">'
     +'<title>FBG Schuljahr – Benutzerhandbuch</title><style>'+css+'</style></head><body>'+T.join('\n')+'</body></html>';
-  speichereDatei('Benutzerhandbuch_FBG_Schuljahr.html', html, false);
+  download('Benutzerhandbuch_FBG_Schuljahr.html', html);
 }
 
 /* ---------- Sperren ----------
@@ -6226,7 +6226,7 @@ function leitungKnopf(){
   const h=$('okL'), b=$('dlL');
   if(b) b.disabled = !(h&&h.checked) || !sperrLage('leitungen').frei;
 }
-function leitungDl(){ speichereDatei('4_Klassenleitungen.ps1', leitungSkript(), false); }
+function leitungDl(){ download('4_Klassenleitungen.ps1', leitungSkript()); }
 
 /* ---------- PowerShell ---------- */
 function leitungSkript(){
@@ -6420,7 +6420,7 @@ function klwZeichnen(){
   if(ok) $('psKlw').textContent=klwSkript();
 }
 function klwKnopf(){ const h=$('okKlw'), b=$('dlKlw'); if(b) b.disabled=!(h&&h.checked); }
-function klwDl(){ speichereDatei('4b_Klassenleitung_Wechsel.ps1', klwSkript(), false); }
+function klwDl(){ download('4b_Klassenleitung_Wechsel.ps1', klwSkript()); }
 
 function klwSkript(){
   const qq=s=>"'"+String(s==null?'':s).replace(/'/g,"''")+"'";
@@ -6688,7 +6688,7 @@ function guidVorsUebernehmen(){
 }
 
 function guidKnopf(){ const h=$('okG'), b=$('dlG'); if(b) b.disabled=!(h&&h.checked); }
-function guidDl(){ speichereDatei('9_GUID_nachtragen.ps1', guidSkript(), false); }
+function guidDl(){ download('9_GUID_nachtragen.ps1', guidSkript()); }
 
 function guidSkript(){
   const qq=s=>"'"+String(s==null?'':s).replace(/'/g,"''")+"'";
@@ -7328,11 +7328,11 @@ function abgCsv(art){
   else { kopf=['Name','Adresse','Verteiler','Aktiv','Kennung'];
     zeilen=e.abgang.map(z=>[z.anzeigename,z.upn,z.verteiler.join(' '),z.aktiv?'ja':'nein',z.kennung]); }
   const csv=[kopf.map(q).join(';')].concat(zeilen.map(r=>r.map(q).join(';'))).join('\r\n');
-  speichereDatei('Abgleich_'+art+'_'+new Date().toISOString().slice(0,10)+'.csv', csv, false);
+  download('Abgleich_'+art+'_'+new Date().toISOString().slice(0,10)+'.csv', csv);
 }
 
 /* ---------- Klassenwechsel-Skript ---------- */
-function abgWechselDl(){ speichereDatei('6_Klassenwechsel.ps1', abgWechselSkript(), false); }
+function abgWechselDl(){ download('6_Klassenwechsel.ps1', abgWechselSkript()); }
 function abgWechselSkript(){
   const gewaehlt=abgGewaehlt('wechsel');
   const dom=($('emailDomain')&&$('emailDomain').value.trim())||'fbg.schwerte.de';
@@ -7565,6 +7565,10 @@ function stSkripte(){
   const kopf=(iserv.split(/\r?\n/)[0]||'');
   stAdd('Dateien','IServ: Spalte Gruppen bleibt leer',
     iserv.split(/\r?\n/).slice(1).every(z=>/;"";"/.test(z)), 'IServ ordnet über die Klassenspalte zu');
+  const quelltext=[...document.scripts].map(x=>x.textContent).join('\n');
+  const falschOrt=(quelltext.match(/speichereDatei\([^;]*,\s*false\)/g)||[]).length;
+  stAdd('Dateien','Alle Knöpfe speichern in den Download-Ordner', falschOrt===0,
+    falschOrt ? falschOrt+' Stellen speichern in den gemeinsamen Ordner' : 'dort suchen die Startbefehle');
   stAdd('Dateien','IServ: Kopfzeile unverändert', /GUID.*Nachname.*Vorname.*Klasse.*Gruppen.*Passwort/.test(kopf));
   const jamf=versuch(()=>buildJamfSchueler(s.leute,s.c));
   stAdd('Dateien','Jamf: Gruppen sind gefüllt', /Schueler,06a/.test(jamf));
@@ -7747,7 +7751,7 @@ function klZeichnen(){
 }
 function klKnopf(){ const h=$('okKL'), b=$('dlKL'); if(b) b.disabled=!(h&&h.checked) || !sperrLage('verteiler').frei; }
 function klSkript(){ return buildKlassenverteiler(KL.leute.filter(p=>p.klasse), Object.assign({},cfg(),{mode:'schueler'})); }
-function klDl(){ speichereDatei('5_Klassenverteiler.ps1', klSkript(), false); }
+function klDl(){ download('5_Klassenverteiler.ps1', klSkript()); }
 
 
 
@@ -7847,7 +7851,7 @@ function vglCsv(){
   e.weg.forEach(x=>z.push(['nicht mehr enthalten',x.name,'','',x.klasse,x.guid].map(q).join(';')));
   e.klasse.forEach(x=>z.push(['Klasse geändert',x.name,x.vorher,x.klasse,x.klasse,x.guid].map(q).join(';')));
   e.name.forEach(x=>z.push(['Name geändert',x.name,x.vorherName,x.name,x.klasse,x.guid].map(q).join(';')));
-  speichereDatei('SchilD_Vergleich_'+new Date().toISOString().slice(0,10)+'.csv', z.join('\r\n'), false);
+  download('SchilD_Vergleich_'+new Date().toISOString().slice(0,10)+'.csv', z.join('\r\n'));
 }
 
 

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>FBG Schuljahr – Konten und Verteiler v4.65</title>
+<title>FBG Schuljahr – Konten und Verteiler v4.66</title>
 <style>
 
   :root{
@@ -439,7 +439,7 @@ th.sortbar:hover{color:var(--accent)}
 <body>
 <header><div class="headwrap">
   <div style="flex:1;min-width:260px">
-    <h1>FBG Schuljahr <span class="vers">v4.65</span></h1>
+    <h1>FBG Schuljahr <span class="vers">v4.66</span></h1>
     <p>Konten, Verteiler und Importdateien für den Schuljahreswechsel. Alles läuft lokal, ohne Internetverbindung.</p>
   </div>
   <div class="suchbox">
@@ -1171,22 +1171,10 @@ Die Grundeinstellungen dazu stehen im Reiter Einstellungen.</p>
 <div class="card" id="abgAnleitCard" data-nonr="1">
   <h2><span class="num">?</span> So gehst du vor</h2>
   <div class="cardbody">
-    <ol class="steps">
-      <li><span class="txt"><b>Ist-Zustand auslesen, in zwei Fenstern.</b> Graph und Exchange vertragen sich nicht in
-        derselben PowerShell-Sitzung, deshalb zwei getrennte Läufe: Fenster 1 liest die Konten und schreibt
-        <code>MS365_Konten.csv</code>, Fenster 2 liest die Klassenverteiler und schreibt <code>MS365_Verteiler.csv</code>.
-        Beides landet auf dem Desktop, beides verändert nichts.</span></li>
-      <li><span class="txt"><b>Alle drei Dateien laden.</b> Die beiden eben erzeugten und den <b>vollständigen</b>
-        SchilD-Export – nicht gefiltert, sonst gelten fehlende Zeilen als Abgang. Ohne die Verteilerdatei
-        funktioniert alles außer der Erkennung von Klassenwechseln.</span></li>
-      <li><span class="txt"><b>Vergleichen.</b> Oben steht die Übersicht je Klasse: Wo überall ✓ steht, passt alles.
-        Wo ⚠ steht, zeigen die Listen darunter, wer betroffen ist. Sieh sie durch, bevor du etwas startest.</span></li>
-      <li><span class="txt"><b>Handeln.</b> Neuzugänge übernimmst du in den Reiter Zugänge und erzeugst dort Konten,
-        Passwörter und Briefe. Für Klassenwechsel, Abgänge und angehakte Unbekannte lädst du ein gemeinsames
-        Korrekturskript. Es ändert nur Verteiler, nie Konten.</span></li>
-    </ol>
+    <ol class="steps" id="abgAnleitung"></ol>
+    <div class="hint" style="margin-top:6px">Dieselbe Anleitung steht auf der Startseite beim Schritt „Änderungen abgleichen“ und im Handbuch.</div>
     <div class="box warn" style="margin-top:12px"><b>Voraussetzung:</b> Die SchilD-Kennung muss bei den Konten hinterlegt sein –
-      siehe Reiter Nachlauf. Ohne sie werden Personen nur über die Adresse erkannt, und Abgänge lassen sich gar nicht ermitteln.
+      siehe Reiter Werkzeugkasten. Ohne sie werden Personen nur über die Adresse erkannt, und Abgänge lassen sich gar nicht ermitteln.
       Konten ohne Kennung, etwa Lehrkräfte, tauchen in der Abgangsliste nie auf.</div>
   </div>
 </div>
@@ -4532,16 +4520,20 @@ const SCHRITTE=[
  {id:'abgleich', titel:'Änderungen abgleichen', reiter:3, ort:'Reiter Abgleich und PowerShell', dauer:'15 Minuten',
   zweck:'Vergleicht den vollständigen SchilD-Export mit dem tatsächlichen Zustand in MS365 und den Klassenverteilern und zeigt, was sich geändert hat.',
   anleitung:[
-   'In SchilD den <b>vollständigen</b> Schülerexport ziehen – ohne Filter, sonst gelten fehlende Kinder als Abgang.',
-   'Reiter <b>Abgleich</b> öffnen. Den Befehl aus <b>Fenster 1</b> in PowerShell ausführen. Er schreibt <code>MS365_Konten.csv</code> auf den Desktop.',
-   'Ein <b>neues</b> PowerShell-Fenster öffnen und den Befehl aus <b>Fenster 2</b> ausführen. Er schreibt <code>MS365_Verteiler.csv</code> auf den Desktop.',
-   'Alle drei Dateien laden und auf <b>Vergleichen</b> klicken.',
-   'Die <b>Übersicht je Klasse</b> ansehen. Steht überall ✓, bist du fertig.',
-   'Gibt es die Liste <b>Ohne Verteiler-Zuordnung</b>: erst die Abiturjahre in den Einstellungen oder die Klasse in SchilD klären, dann neu vergleichen.',
-   'Die Listen durchsehen und Haken setzen oder entfernen. Unbekannte nur anhaken, wenn sie wirklich heraus sollen.',
-   '<code>6_Klassenwechsel.ps1</code> herunterladen, zuerst als <b>Simulation</b> starten, die Ausgabe lesen, dann mit <code>-Live</code> ausführen.',
-   'Neuzugänge mit dem Knopf in den Reiter Zugänge übernehmen und dort wie gewohnt anlegen.',
-   'Zur Kontrolle Fenster 2 noch einmal laufen lassen und neu vergleichen.'
+   '<b>SchilD-Export holen.</b> Den Schülerexport ziehen wie für die Konten – <b>nicht filtern</b>, alle Jahrgänge und Klassen. Fehlende Kinder hält das Werkzeug sonst für Abgänge. Datei im Download-Ordner speichern.',
+   '<b>Fenster 1.</b> PowerShell 7 öffnen. Im Reiter Abgleich, Karte 1, den Block „Fenster 1 – Konten über Graph“ kopieren, einfügen, starten und anmelden. Auf dem Desktop entsteht <code>MS365_Konten.csv</code>.',
+   '<b>Fenster 2.</b> Ein <b>neues</b> PowerShell-Fenster öffnen, den Block „Fenster 2 – Verteiler über Exchange“ kopieren, einfügen, starten und anmelden. Auf dem Desktop entsteht <code>MS365_Verteiler.csv</code>. In der Ausgabe muss „… Lehrkraefte im Kollegiumsverteiler“ stehen – sonst die Adresse des Kollegiumsverteilers in den Einstellungen prüfen. Beide Befehle lesen nur.',
+   '<b>Vergleichen.</b> In Karte 2 die drei Dateien laden und auf <b>Vergleichen</b> klicken.',
+   '<b>Übersicht je Klasse ansehen.</b> ✓ passt = in Ordnung · ⚠ prüfen = die Listen darunter zeigen, wer betroffen ist · Verteiler fehlt = erst anlegen (Reiter Zugänge, Skript Klassenverteiler). Steht überall ✓, bist du fertig.',
+   '<b>Ohne Verteiler-Zuordnung zuerst klären.</b> Fehlt das Abiturjahr für EP, Q1 oder Q2, in den Einstellungen eintragen; steht in SchilD eine ungewöhnliche Klasse, dort berichtigen. Dann neu vergleichen.',
+   '<b>Haken prüfen.</b> Klassenwechsel und falsche Verteiler: vorausgewählt, nur abwählen, wenn SchilD falsch ist · Nicht mehr im Export: vorausgewählt, die Kinder kommen aus ihren Klassenverteilern, das Konto bleibt · Unbekannt im Verteiler: nichts vorausgewählt, nur anhaken, was wirklich heraus soll · Namensabweichungen: nur zur Info.',
+   '<b>Korrekturskript herunterladen.</b> Ganz unten im Ergebnis; <code>6_Klassenwechsel.ps1</code> landet im Download-Ordner.',
+   '<b>Simulation starten.</b> Den Befehl unter „So führst du das Skript aus“, Teil 1, kopieren und ausführen. Die Ausgabe lesen: bei jedem Kind „WUERDE entfernen aus …“ oder „WUERDE aufnehmen in …“. Gelbe Zeilen mit <b>!</b> zuerst klären.',
+   '<b>Echt ausführen.</b> Den Befehl aus Teil 2 kopieren und ausführen – er startet das Skript mit <code>-Live</code>.',
+   '<b>Neuzugänge</b>, falls es welche gibt: mit dem Knopf in den Reiter Zugänge übernehmen und dort wie gewohnt Konten, Passwörter und Briefe erzeugen.',
+   '<b>Kontrolle.</b> Fenster 2 noch einmal laufen lassen, die neue Datei laden und erneut vergleichen. Jetzt sollte überall ✓ stehen.',
+   '<b>Abschließen.</b> Auf der Startseite im Vorgang die Schritte abhaken und „Vorgang abschließen“ klicken.',
+   '<b>Aufräumen.</b> Die CSV-Dateien vom Desktop löschen – sie enthalten Namen von Schülerinnen und Schülern.'
   ],
   warum:'<p>Nach dem Sommer ist nicht Schluss. Wiederholer, nicht bestandene Nachprüfungen, Zuzüge und Abgänge ändern die Lage noch wochenlang. Dieser Schritt ersetzt das mühsame Nachpflegen von Hand.</p>'
        +'<p>Er läuft in zwei Teilen: Ein Leseskript holt den Ist-Zustand aus MS365 und Exchange in eine Datei – wer existiert, welche Kennung er trägt, in welchem Klassenverteiler er steckt. Diese Datei ladet ihr zusammen mit dem <b>vollständigen</b> SchilD-Export ins Werkzeug, das daraus die Unterschiede rechnet.</p>'
@@ -6993,8 +6985,17 @@ function guidSkript(){
    Änderungsabgleich: SchilD gegen den Ist-Zustand in MS365
    ============================================================ */
 let ABG={bestand:[], kopf:'', zeilen:[], erg:null, trenner:';'};
+setTimeout(()=>{ try{ abgAnleitungZeichnen(); }catch(e){} },0);
 
+/* Die Karte „So gehst du vor“ zeigt die Anleitung des Schritts abgleich -
+   gepflegt wird sie nur an einer Stelle, in SCHRITTE. */
+function abgAnleitungZeichnen(){
+  const ol=$('abgAnleitung'); const st=schritt('abgleich');
+  if(!ol || !st || !st.anleitung) return;
+  ol.innerHTML=st.anleitung.map(x=>'<li><span class="txt">'+x+'</span></li>').join('');
+}
 function abgleichStart(){
+  abgAnleitungZeichnen();
   [['bestDatei','bestText'],['vertDatei','vertText'],['schildDatei','schildText']].forEach(([f,t])=>{
     const el=$(f); if(!el || el.dataset.bereit) return;
     el.dataset.bereit='1';
@@ -7919,6 +7920,10 @@ function stAbgleich(){
   ];
   const e=abgKern(bestand, vert, rows, d, {});
   const w=id=>e.wechsel.find(x=>x.guid===id);
+  abgAnleitungZeichnen();
+  const ol=document.getElementById('abgAnleitung');
+  stAdd('Klassenabgleich','Karte „So gehst du vor“ zeigt die Anleitung aus dem Schritt',
+    !!ol && ol.children.length===(schritt('abgleich').anleitung||[]).length && ol.children.length>0);
   stAdd('Klassenabgleich','Leerer Verteiler wird erkannt', !!vert.gruppen['07c']);
   stAdd('Klassenabgleich','Kollegiumsverteiler zählt nicht als Klasse', !vert.gruppen['#kollegium'] && !!vert.kollegium['weide@'+d]);
   stAdd('Klassenabgleich','Lehrkraft ohne Position wird über den Kollegiumsverteiler erkannt', !e.fremd.some(x=>/^weide@/.test(x.adresse)));

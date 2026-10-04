@@ -25,7 +25,7 @@ Diese Datei liest Claude zu Beginn jeder Sitzung automatisch. Sie ersetzt den la
 - Abläufe: `VORGAENGE` (art `jahr`/`laufend`) mit `SCHRITTE` {id, titel, reiter, ort, dauer, zweck, anleitung[], warum}. Daraus werden Reiter 0 „Abläufe und Anleitungen“, das Handbuch und die Suche erzeugt.
 - Suche: `suchIndex()`, `suchLauf()`. Briefvorlagen: `VORLAGEN_STD`, Platzhalter über `briefFelder()`; Datum immer TT.MM.JJJJ (`datumDe`).
 - Download: nur eine Funktion `download()` → `speichereDatei(..., true)` = Downloads.
-- Nach jeder Änderung: Version im `<title>` und `<h1>` erhöhen (aktuell v4.65), Selbsttest (Einstellungen → Selbsttest) muss grün bleiben (86/86). Testen z. B. mit Node + jsdom oder Playwright (Chromium unter `/opt/pw-browsers/chromium`): `selbsttest(false)`.
+- Nach jeder Änderung: Version im `<title>` und `<h1>` erhöhen (aktuell v4.66), Selbsttest (Einstellungen → Selbsttest) muss grün bleiben (87/87). Testen z. B. mit Node + jsdom oder Playwright (Chromium unter `/opt/pw-browsers/chromium`): `selbsttest(false)`.
 - PowerShell-Variablen sind nicht case-sensitiv: `$Soll` und `$soll` sind dieselbe Variable. Selbsttest prüft das. Erzeugte Skripte lassen sich lokal mit pwsh und Stub-Funktionen für die Exchange-Cmdlets testen. Fehlt pwsh in der Cloud-Sitzung, nachinstallieren: `mkdir -p /opt/pwsh && curl -sSL https://github.com/PowerShell/PowerShell/releases/download/v7.4.6/powershell-7.4.6-linux-x64.tar.gz | tar xz -C /opt/pwsh && chmod +x /opt/pwsh/pwsh`. Erzeugte Skripte als eigenes Skript starten (`./x.ps1`), nicht dot-sourcen, sonst überschreiben ihre Variablen die Stub-Variablen.
 - Achtung bei Ersetzungen: `</style>` kommt mehrfach vor (auch in erzeugten Handbuch-/Brief-Strings).
 
@@ -44,12 +44,13 @@ Diese Datei liest Claude zu Beginn jeder Sitzung automatisch. Sie ersetzt den la
   - Alles Angehakte geht in **ein** Korrekturskript `6_Klassenwechsel.ps1`. Es ändert nur Verteiler.
   - Fenster 1 liest zusätzlich `Mail` (Verteiler liefern die Mailadresse, nicht den UPN). Fenster 2 schreibt auch leere Verteiler (Zeile mit leerer Adresse) und die Spalte `Name`.
   - Die Startseite erinnert 4 Wochen nach dem Haken bei „Verteiler versetzen“, Datum der letzten Prüfung in `STAND.abgleich`.
+  - Die Karte „So gehst du vor“ im Reiter Abgleich zeigt die `anleitung[]` des Schritts `abgleich` (`abgAnleitungZeichnen()`). Anleitung nur dort in `SCHRITTE` pflegen, nie doppelt im HTML.
 - **WLAN**: persönlich `FBG` (RADIUS, IServ-Zugang), Geräte `GeräteFBG` (festes Passwort, Einstellung `wlanPasswort`).
 
 ## Offene Punkte (Stand 04.10.2026)
 
 - Anleitungen (`anleitung[]`) für die übrigen Vorgänge schreiben: Schuljahreswechsel, Oberstufenkurse, neue Schüler, neue Lehrkraft. Entwurf vorlegen, Kai korrigiert.
-- Entwurf der Anleitung zum Schritt „Änderungen abgleichen“ (deckt Klassenwechsel und Abgleich ab) liegt seit v4.64 vor – Kai muss ihn noch korrigieren.
+- Anleitung zum Schritt „Änderungen abgleichen“ (14 Schritte, seit v4.66 auch auf der Karte „So gehst du vor“): Kai prüft sie beim ersten echten Lauf und meldet Korrekturen.
 - Abgleich auf Jamf/IServ erweitern + Korrekturdateien (Klassenverteiler sind seit v4.64 erledigt); passwortfreie IServ-Standdatei; Merge-Skript in den Werkzeugkasten.
 - Werkzeugkasten: alle Karten beim Start zugeklappt.
 - WebUntis-Karte: „Vorname gekürzt“ vorauswählen (Sek I wird ab nächstem Jahrgang direkt in WebUntis importiert).

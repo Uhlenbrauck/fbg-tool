@@ -47,6 +47,17 @@ Diese Datei liest Claude zu Beginn jeder Sitzung automatisch. Sie ersetzt den la
   - Die Karte „So gehst du vor“ im Reiter Abgleich zeigt die `anleitung[]` des Schritts `abgleich` (`abgAnleitungZeichnen()`). Anleitung nur dort in `SCHRITTE` pflegen, nie doppelt im HTML.
 - **WLAN**: persönlich `FBG` (RADIUS, IServ-Zugang), Geräte `GeräteFBG` (festes Passwort, Einstellung `wlanPasswort`).
 
+## Umbau der Oberfläche v5 (besprochen 09.10.2026, noch nicht begonnen)
+
+- Ziel: nur Übersichtlichkeit, keine Funktion ändern. Klickbare Vorschau: `entwurf/FBG_Vorschau_v5.html` (nur auf dem Arbeitszweig).
+- Hauptreiter: Start · Zugänge anlegen · Schuljahreswechsel · Prüfen & Pflegen · Einstellungen. Werkzeugkasten wird aufgelöst.
+- Unterreiter nur bei „Zugänge anlegen“: Schüler · Lehrkräfte · Referendare · Praktikanten. Referendare = intern wie Lehrkräfte, nur eigener Einstieg.
+- Seitenleiste je Bereich in **Arbeitsreihenfolge** (wie in `VORGAENGE`), Etikett je System (MS365, Jamf, IServ, WebUntis, SchILD). ⏳-Zeilen für Schritte ohne Karte, ↗-Zeilen für Sprünge zu einer Karte an anderer Stelle. Keine Karte doppelt.
+- Alle Karten bleiben untereinander sichtbar; Klick in der Seitenleiste springt hin. Nur breite Monitore, keine Handy-Ansicht.
+- Zwei Pakete: **5.0** = neue Gliederung; **5.1** = zentrales Einlesen unter Start → „Daten einlesen“ aus einem eigenen lokalen Datenordner (nicht der gemeinsame Ordner), Erkennung an der Kopfzeile, neueste Datei je Art, Warnung ab 4 Wochen Alter, „andere Datei …“ als Ausweg.
+- Vorschau-Datei vor dem Pull Request löschen (Kai: „A“).
+- Nächster Schritt: Kai schaut die Vorschau an. Danach Liste „welche Karte wandert wohin“ vorlegen und auf Okay warten, erst dann bauen.
+
 ## Offene Punkte (Stand 04.10.2026)
 
 - Anleitungen (`anleitung[]`) für die übrigen Vorgänge schreiben: Schuljahreswechsel, Oberstufenkurse, neue Schüler, neue Lehrkraft. Entwurf vorlegen, Kai korrigiert.

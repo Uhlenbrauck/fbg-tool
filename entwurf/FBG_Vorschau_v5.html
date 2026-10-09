@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>FBG Schuljahr – Vorschau v5.0</title>
+<style>
+  /* Entwurf der neuen Oberfläche. Keine Funktionen, keine echten Daten. */
+  :root{
+    --bg:#f6f7f9; --card:#ffffff; --panel:#f8fafc;
+    --ink:#111827; --ink-2:#374151; --muted:#6b7280;
+    --line:#e5e7eb; --line-2:#d1d5db;
+    --accent:#4f46e5; --accent-2:#4338ca; --accent-soft:#eef2ff;
+    --ok:#047857; --ok-bg:#ecfdf5; --ok-line:#a7f3d0;
+    --warn:#b45309; --warn-bg:#fffbeb; --warn-line:#fde68a;
+    --err:#b91c1c; --err-bg:#fef2f2; --err-line:#fecaca;
+    --radius:14px; --radius-sm:9px;
+    --shadow:0 1px 2px rgba(16,24,40,.04), 0 1px 3px rgba(16,24,40,.06);
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#0f1216; --card:#171b21; --panel:#1c2129;
+      --ink:#e8eaed; --ink-2:#c3c8d0; --muted:#98a1ae;
+      --line:#282f39; --line-2:#39424f;
+      --accent:#818cf8; --accent-2:#a5b4fc; --accent-soft:#1e213a;
+      --ok:#6ee7b7; --ok-bg:#0e2a22; --ok-line:#14513f;
+      --warn:#fcd34d; --warn-bg:#2b2213; --warn-line:#5b4519;
+      --err:#fca5a5; --err-bg:#2c1618; --err-line:#5b2326;
+      --shadow:0 1px 2px rgba(0,0,0,.4);
+    }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-size:15px;line-height:1.55;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  header{position:sticky;top:0;z-index:30;background:var(--card);border-bottom:1px solid var(--line)}
+  .headwrap{max-width:1240px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  header h1{margin:0;font-size:17px;font-weight:650}
+  header p{margin:2px 0 0;color:var(--muted);font-size:12.5px}
+  .vers{font-size:12px;font-weight:600;color:var(--muted);background:var(--panel);
+    border:1px solid var(--line);border-radius:999px;padding:2px 9px;margin-left:8px}
+  .entwurf{background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn-line);
+    border-radius:999px;padding:3px 11px;font-size:12px;font-weight:650}
+  .suchbox{flex:0 1 300px;min-width:200px}
+  .suchbox input{width:100%;padding:8px 12px;border:1px solid var(--line);border-radius:9px;
+    font-size:13.5px;background:var(--card);color:var(--ink)}
+
+  /* Ebene 1: Hauptreiter */
+  .hauptnav{background:var(--card);border-bottom:1px solid var(--line)}
+  .hauptnav .innen{max-width:1240px;margin:0 auto;padding:0 24px;display:flex;gap:4px;overflow-x:auto}
+  .hauptnav button{border:0;background:none;padding:12px 16px;font-size:14px;font-weight:600;color:var(--muted);
+    cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;font-family:inherit}
+  .hauptnav button:hover{color:var(--ink)}
+  .hauptnav button.aktiv{color:var(--accent);border-bottom-color:var(--accent)}
+  .hauptnav button.fertig::after{content:" ✓";color:var(--ok)}
+
+  /* Ebene 2: Unterreiter, nur wo es Personengruppen gibt */
+  .unternav{max-width:1240px;margin:16px auto 0;padding:0 24px}
+  .seg{display:inline-flex;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:3px;flex-wrap:wrap}
+  .seg button{border:0;background:transparent;padding:7px 18px;font-size:14px;cursor:pointer;
+    color:var(--muted);border-radius:999px;font-family:inherit}
+  .seg button:hover{color:var(--ink)}
+  .seg button.aktiv{background:var(--accent);color:#fff;font-weight:600}
+
+  /* Ebene 3: Seitenleiste + Inhalt */
+  .rahmen{max-width:1240px;margin:0 auto;padding:18px 24px 60px;display:grid;
+    grid-template-columns:270px 1fr;gap:22px;align-items:start}
+  .rahmen.ohneLeiste{grid-template-columns:1fr}
+  aside{position:sticky;top:120px;background:var(--card);border:1px solid var(--line);
+    border-radius:var(--radius);padding:10px 8px;box-shadow:var(--shadow);max-height:calc(100vh - 140px);overflow:auto}
+  .grp{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);
+    padding:12px 10px 4px}
+  .grp:first-child{padding-top:4px}
+  .eintrag{display:flex;align-items:center;gap:8px;width:100%;text-align:left;border:0;background:none;
+    padding:7px 10px;border-radius:8px;font-size:13.5px;color:var(--ink-2);cursor:pointer;font-family:inherit}
+  .eintrag:hover{background:var(--panel)}
+  .eintrag.aktiv{background:var(--accent-soft);color:var(--accent);font-weight:650}
+  .eintrag .hk{width:16px;height:16px;border-radius:50%;border:1.5px solid var(--line-2);flex:none;
+    display:inline-flex;align-items:center;justify-content:center;font-size:10px}
+  .eintrag.erledigt .hk{background:var(--ok);border-color:var(--ok);color:#fff}
+  .eintrag.erledigt .hk::before{content:"✓"}
+  .eintrag .fehlt{margin-left:auto;font-size:10.5px;color:var(--warn);font-weight:700}
+  .leisteMobil{display:none}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:22px 24px;margin-bottom:20px;box-shadow:var(--shadow)}
+  .card h2{margin:0 0 14px;font-size:16px;font-weight:650;display:flex;align-items:center;gap:9px}
+  .num{display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:24px;
+    padding:0 7px;border-radius:8px;background:var(--accent-soft);color:var(--accent);font-size:12.5px;font-weight:700}
+  .muted{color:var(--muted)}
+  .platzhalter{border:2px dashed var(--line-2);border-radius:var(--radius-sm);padding:26px;text-align:center;
+    color:var(--muted);font-size:13.5px;margin-top:14px;background:var(--panel)}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+  .chip{font-size:12px;padding:3px 10px;border-radius:999px;border:1px solid var(--line);background:var(--panel);cursor:pointer}
+  .chip.da{border-color:var(--ok-line);background:var(--ok-bg);color:var(--ok)}
+  .chip.weg{border-color:var(--warn-line);background:var(--warn-bg);color:var(--warn)}
+  .meta{display:grid;grid-template-columns:max-content 1fr;gap:4px 14px;font-size:13px;margin-top:4px}
+  .meta b{color:var(--muted);font-weight:600}
+  .fuss{display:flex;justify-content:space-between;gap:10px;margin-top:18px}
+  .btn{border:1px solid var(--line-2);background:var(--card);color:var(--ink);padding:8px 16px;border-radius:9px;
+    font-size:13.5px;cursor:pointer;font-family:inherit}
+  .btn:hover{border-color:var(--accent);color:var(--accent)}
+  .btn.prim{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn:disabled{opacity:.4;cursor:default}
+  .box{border-radius:var(--radius-sm);padding:12px 14px;font-size:13.5px;margin-top:12px}
+  .box.warn{background:var(--warn-bg);border:1px solid var(--warn-line)}
+  .box.info{background:var(--accent-soft);border:1px solid var(--line)}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin-top:10px}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+  .st{font-weight:650;white-space:nowrap}
+  .st.ok{color:var(--ok)} .st.alt{color:var(--warn)} .st.fehlt{color:var(--err)}
+  code{font-family:ui-monospace,Consolas,monospace;font-size:12.5px;background:var(--panel);padding:1px 5px;border-radius:5px}
+
+  @media (max-width:820px){
+    .rahmen{grid-template-columns:1fr;padding:14px 16px 50px}
+    aside{display:none}
+    .leisteMobil{display:block}
+    .leisteMobil select{width:100%;padding:9px 12px;border:1px solid var(--line-2);border-radius:9px;
+      font-size:14px;background:var(--card);color:var(--ink)}
+    .unternav,.headwrap{padding-left:16px;padding-right:16px}
+  }
+</style>
+</head>
+<body>
+<header><div class="headwrap">
+  <div style="flex:1;min-width:240px">
+    <h1>FBG Schuljahr <span class="vers">v5.0 Vorschau</span></h1>
+    <p>Nur ein Entwurf der Oberfläche. Knöpfe tun nichts, alle Daten sind erfunden.</p>
+  </div>
+  <div class="suchbox"><input type="text" placeholder="Suchen: Vorgang, Schritt, Karte …" disabled></div>
+  <span class="entwurf">Entwurf</span>
+</div></header>
+
+<nav class="hauptnav"><div class="innen" id="hauptnav"></div></nav>
+<div class="unternav" id="unternav"></div>
+<div class="rahmen" id="rahmen">
+  <aside id="leiste"></aside>
+  <section>
+    <div class="leisteMobil" id="leisteMobil"></div>
+    <div id="inhalt"></div>
+  </section>
+</div>
+
+<script>
+/* ---------- Datenquellen: alles, was das Tool einliest ---------- */
+const QUELLEN = {
+  schildS: {titel:'SchILD-Export Schüler', erkennt:'Kopfzeile mit „Interne ID-Nummer“ und „Klasse“',
+            datei:'SchILD_Schueler_2026-10-07.txt', stand:'07.10.2026', zeilen:'812 Zeilen', status:'ok'},
+  schildL: {titel:'SchILD-Export Lehrkräfte', erkennt:'Kopfzeile mit „Kürzel“ und „Amtsbezeichnung“',
+            datei:'SchILD_Lehrer_2026-08-20.txt', stand:'20.08.2026', zeilen:'74 Zeilen', status:'alt'},
+  ibiza:   {titel:'Ibiza-Kursexport (EP/Q1/Q2)', erkennt:'7er-Blöcke ab Spalte 7',
+            datei:'Ibiza_EP_2026-09-15.txt', stand:'15.09.2026', zeilen:'118 Zeilen', status:'ok'},
+  konten:  {titel:'MS365-Kontenbestand (Fenster 1)', erkennt:'Kopfzeile mit „UserPrincipalName“ und „Mail“',
+            datei:'Kontenbestand_2026-10-08.csv', stand:'08.10.2026', zeilen:'934 Zeilen', status:'ok'},
+  vert:    {titel:'Verteiler-Export (Fenster 2)', erkennt:'Kopfzeile mit „Verteiler“ und „Name“',
+            datei:'', stand:'', zeilen:'', status:'fehlt'},
+  jamfS:   {titel:'Jamf-Benutzerexport', erkennt:'Kopfzeile mit „Username“ und „Groups“',
+            datei:'Jamf_Users_2026-09-30.csv', stand:'30.09.2026', zeilen:'801 Zeilen', status:'ok'},
+  jamfL:   {titel:'Jamf-Lehrerexport', erkennt:'Kopfzeile mit „Username“ und „Teacher“',
+            datei:'', stand:'', zeilen:'', status:'fehlt'},
+  untis:   {titel:'WebUntis-Stammdatenbericht Schüler', erkennt:'Spalte „externKey“',
+            datei:'Untis_Stammdaten_2026-09-02.csv', stand:'02.09.2026', zeilen:'806 Zeilen', status:'ok'}
+};
+
+/* ---------- Gliederung: Hauptreiter → (Unterreiter) → Seitenleiste ---------- */
+const K = (id,titel,heute,was,braucht=[]) => ({id,titel,heute,was,braucht});
+const NAV = [
+ {id:'start', titel:'Start', leiste:[
+   {grp:'Überblick', items:[
+     K('heute','Was jetzt ansteht','Reiter 0, oben','Erinnerungen (z. B. Abgleich nach 4 Wochen) und der Stand der Vorgänge.'),
+     K('daten','Daten einlesen','neu – heute in jeder Karte einzeln','Alle Dateien an einer Stelle. Das Tool sucht im Datenordner die neueste Datei je Art.'),
+   ]},
+   {grp:'Anleitungen', items:[
+     K('ablaeufe','Abläufe und Anleitungen','Reiter 0, Karte „Abläufe und Anleitungen“','Die Vorgänge mit ihren Schritten, Haken und Notizen.'),
+     K('systeme','Welcher Vorgang berührt welches System','Reiter 0, Karte gleichen Namens','Die Übersichtstabelle.'),
+     K('handbuch','Handbuch','Reiter 0','Das erzeugte Handbuch zum Ausdrucken.'),
+   ]},
+   {grp:'Einmalig', items:[
+     K('team','Zu zweit arbeiten','Reiter 0, Karte gleichen Namens','Gemeinsamer Ordner und Standdatei.'),
+     K('voraus','Einmalige Voraussetzungen','Reiter 0, Karte gleichen Namens','Nur beim ersten Mal auf einem Rechner.'),
+   ]},
+ ]},
+ {id:'zugang', titel:'Zugänge anlegen', unter:[
+   {id:'schueler', titel:'Schüler', leiste:[
+     {grp:'Vorbereitung', items:[
+       K('sichern','Kontenbestand sichern','Reiter 1, Karte 1','Den Ist-Zustand der Konten wegschreiben, bevor etwas geändert wird.'),
+       K('einlesen','Daten prüfen und Vorschau','Reiter 1, Karten 3 und 4','Zeigt, welche Schüler aus dem SchILD-Export kommen, mit Warnungen. Die Datei selbst liegt jetzt unter Start → Daten einlesen.',['schildS']),
+     ]},
+     {grp:'MS365', items:[
+       K('ms365','Konten anlegen (Skript)','Reiter 1, Karte 5, Abschnitt PowerShell','Das PowerShell-Skript für Konten und Lizenzen.',['schildS']),
+       K('verteilerS','Klassenverteiler füllen','Reiter 2, Karte 6','Neue Klassen anlegen und Schüler aufnehmen.',['schildS']),
+       K('sri','Mailadressen zurück nach SchILD','Werkzeugkasten, Karte 3','Importdatei für den ExternImport.',['schildS','konten']),
+     ]},
+     {grp:'Jamf', items:[
+       K('jamfCsv','Jamf-CSV','Reiter 1, Karte 5, Abschnitt Jamf','Benutzerimport, ersetzt Klassen und Gruppen.',['schildS']),
+       K('jamfNamen','Jamf-Benutzernamen übernehmen','Reiter 1, Karte 4, Jamf-Abgleich','Vorhandene Jamf-Namen statt neu gebildeter.',['jamfS','konten']),
+       K('ep','Oberstufenkurse (EP/Q1/Q2)','Reiter 1, Kursdaten','Kursgruppen aus dem Ibiza-Export.',['ibiza']),
+     ]},
+     {grp:'IServ', items:[
+       K('iservCsv','IServ-CSV','Reiter 1, Karte 5, Abschnitt IServ','Vollimport, überschreibt die Klassen.',['schildS']),
+       K('iservProfil','IServ-Importprofil','Werkzeugkasten, Karte 4','Zum Nachschlagen, ist eingerichtet.'),
+     ]},
+     {grp:'WebUntis', items:[
+       K('wui','Office-365-Identität nachtragen','Werkzeugkasten, Karte 4','Damit die Anmeldung per SSO läuft.',['untis','konten']),
+     ]},
+     {grp:'Zugangsdaten', items:[
+       K('briefeS','Briefe und Mailtexte','Reiter 1, Karte 6','Serienbriefe mit den Zugangsdaten.',['schildS']),
+     ]},
+   ]},
+   {id:'lehrer', titel:'Lehrkräfte', hinweis:'Referendare laufen hier mit, wie bisher.', leiste:[
+     {grp:'Vorbereitung', items:[
+       K('sichernL','Kontenbestand sichern','Reiter 1, Karte 1','Ist-Zustand der Konten wegschreiben.'),
+       K('teams','Verteiler und Teams','Reiter 1, Karte 2','Kollegiumsverteiler, Kollegiumsteam, Lernbegleitung.'),
+       K('einlesenL','Daten prüfen und Vorschau','Reiter 1, Karten 3 und 4','Neue Lehrkräfte aus dem SchILD-Export.',['schildL']),
+     ]},
+     {grp:'MS365', items:[
+       K('ms365L','Konten anlegen (Skript)','Reiter 1, Karte 5','Konten, Lizenzen, Verteiler, Teams.',['schildL']),
+     ]},
+     {grp:'Jamf', items:[
+       K('jamfL','Jamf-CSV','Reiter 1, Karte 5','Lehrkräfte in Jamf.',['schildL']),
+       K('tg','TeacherGroups-CSV','Werkzeugkasten, Karte 2','Lehrkräfte als Lehrer in ihre Klassen und Kurse.',['jamfL','ibiza']),
+     ]},
+     {grp:'IServ', items:[
+       K('iservL','IServ-CSV','Reiter 1, Karte 5','Lehrkräfte in IServ.',['schildL']),
+     ]},
+     {grp:'Zugangsdaten', items:[
+       K('briefeL','Briefe und Mailtexte','Reiter 1, Karte 6','Zugangsdaten für neue Kolleginnen und Kollegen.',['schildL']),
+     ]},
+   ]},
+   {id:'prak', titel:'Praktikanten', leiste:[
+     {grp:'Anlegen', items:[
+       K('prakNamen','Namen eintragen','Reiter 1, Bereich Praktikum','Kohorte, Namen, Enddatum. Kommt nicht aus SchILD.'),
+       K('prakMs','Konten anlegen (Skript)','Reiter 1, Karte 5','Befristete MS365-Konten mit Kennung PRAKT-….'),
+       K('prakVert','Kollegiumsverteiler','Reiter 1, Karte 5','Aufnahme in den Verteiler.'),
+     ]},
+     {grp:'WebUntis', items:[
+       K('prakUntis','WebUntis-Benutzer (CSV)','Reiter 1, Karte 5','Import mit Benutzergruppe und Office-365-Identität.'),
+     ]},
+     {grp:'Zugangsdaten', items:[
+       K('prakBrief','Zugangsdaten übergeben','Reiter 1, Karte 6','Brief oder Mailtext.'),
+     ]},
+     {grp:'Ende des Praktikums', items:[
+       K('prakBlick','Praktika im Blick','Werkzeugkasten, Karte 3','Befristungen, fällige Abmeldungen, Aufräumen.'),
+     ]},
+   ]},
+ ]},
+ {id:'wechsel', titel:'Schuljahreswechsel', leiste:[
+   {grp:'Verteiler versetzen', items:[
+     K('vsichern','Verteiler sichern','Reiter 2, Karte 1','Vor allem anderen.'),
+     K('zuordnung','Zuordnung','Reiter 2, Karte 2','Welche Klasse wird zu welcher.'),
+     K('pruefung','Reihenfolge und Prüfung','Reiter 2, Karte 3','Damit nichts überschrieben wird.'),
+     K('skript','Skript','Reiter 2, Karte 4','Das Versetzungsskript.'),
+   ]},
+   {grp:'Danach', items:[
+     K('klFuellen','Klassenverteiler füllen','Reiter 2, Karte 6','Neue 5er und Zugänge aufnehmen.',['schildS']),
+     K('leitung','Klassenleitungen aktualisieren','Reiter 2, Karte L','Nach dem Versetzen.',['schildL']),
+     K('nachlauf','Nachlauf','Werkzeugkasten, Karte 1','Kontrollbefehle und Aufräumen.'),
+   ]},
+ ]},
+ {id:'pflege', titel:'Prüfen & Pflegen', leiste:[
+   {grp:'Abgleich', items:[
+     K('abgAnleit','So gehst du vor','Reiter 3, Karte „So gehst du vor“','Die 14 Schritte aus der Anleitung.'),
+     K('abgLesen','Ist-Zustand auslesen','Reiter 3, Karte 1','Zwei PowerShell-Fenster.'),
+     K('abgVergl','Vergleichen und korrigieren','Reiter 3, Karten 2 und 3','Ergebnis und Korrekturskript 6_Klassenwechsel.ps1.',['schildS','konten','vert']),
+     K('vgl','Zwei SchILD-Exporte vergleichen','Reiter 3, Karte 4','Ohne Tenant, rein lokal. Braucht einen älteren und einen neueren Export.'),
+   ]},
+   {grp:'Im laufenden Jahr', items:[
+     K('klw','Klassenleitung wechseln','Werkzeugkasten, Karte 5','Einzelne Klassen, mitten im Schuljahr.'),
+     K('guid','SchILD-Kennung bei Altkonten nachtragen','Werkzeugkasten, Karte 3','Für Konten von vor dem Tool.',['schildS','konten']),
+   ]},
+ ]},
+ {id:'einst', titel:'Einstellungen', leiste:[
+   {grp:'Einstellungen', items:[
+     K('einmal','Einmal einrichten','Reiter 5, Karte 1','Domains, Lizenzen, Zielsysteme.'),
+     K('jaehrlich','Jedes Jahr prüfen','Reiter 5, Karte 2','Jahrgänge und Oberstufe.'),
+     K('datenordner','Datenordner','neu','Wo das Tool die Exporte sucht.'),
+     K('selbsttest','Selbsttest','Reiter 5, Karte „Selbsttest“','Prüft das Tool. Muss grün sein.'),
+   ]},
+ ]},
+];
+
+/* ---------- Zustand der Vorschau ---------- */
+const S = {haupt:'start', unter:{zugang:'schueler'}, karte:{}, erledigt:new Set(['vsichern','zuordnung','pruefung','skript'])};
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function aktBereich(){
+  const h = NAV.find(n => n.id===S.haupt);
+  if(!h.unter) return {h, b:h, key:h.id};
+  const u = h.unter.find(x => x.id===S.unter[h.id]) || h.unter[0];
+  return {h, b:u, key:h.id+'/'+u.id};
+}
+function alleItems(b){ return b.leiste.flatMap(g => g.items); }
+
+function zeichne(){
+  // Hauptreiter
+  $('hauptnav').innerHTML = NAV.map(n => {
+    const items = n.unter ? n.unter.flatMap(alleItems) : alleItems(n);
+    const fertig = n.id==='wechsel' && items.every(i => S.erledigt.has(i.id));
+    return `<button class="${n.id===S.haupt?'aktiv':''} ${fertig?'fertig':''}" onclick="wahlHaupt('${n.id}')">${esc(n.titel)}</button>`;
+  }).join('');
+
+  const {h, b, key} = aktBereich();
+
+  // Unterreiter
+  $('unternav').innerHTML = h.unter
+    ? `<div class="seg">${h.unter.map(u => `<button class="${u===b?'aktiv':''}" onclick="wahlUnter('${h.id}','${u.id}')">${esc(u.titel)}</button>`).join('')}</div>`
+      + (b.hinweis ? ` <span class="muted" style="font-size:13px;margin-left:10px">${esc(b.hinweis)}</span>` : '')
+    : '';
+
+  // Seitenleiste
+  const items = alleItems(b);
+  if(!S.karte[key]) S.karte[key] = items[0].id;
+  const akt = items.find(i => i.id===S.karte[key]) || items[0];
+  $('leiste').innerHTML = b.leiste.map(g =>
+    `<div class="grp">${esc(g.grp)}</div>` + g.items.map(i => {
+      const fehlt = i.braucht.some(q => QUELLEN[q].status==='fehlt');
+      return `<button class="eintrag ${i===akt?'aktiv':''} ${S.erledigt.has(i.id)?'erledigt':''}" onclick="wahlKarte('${key}','${i.id}')">`
+        + `<span class="hk"></span>${esc(i.titel)}${fehlt?'<span class="fehlt" title="Datei fehlt">Daten?</span>':''}</button>`;
+    }).join('')
+  ).join('');
+  $('leisteMobil').innerHTML = `<select onchange="wahlKarte('${key}',this.value)">`
+    + b.leiste.map(g => `<optgroup label="${esc(g.grp)}">` + g.items.map(i =>
+        `<option value="${i.id}" ${i===akt?'selected':''}>${S.erledigt.has(i.id)?'✓ ':''}${esc(i.titel)}</option>`).join('') + '</optgroup>').join('')
+    + '</select><div style="height:14px"></div>';
+
+  // Inhalt
+  $('inhalt').innerHTML = akt.id==='daten' ? datenKarte() : akt.id==='heute' ? heuteKarte() : platzhalter(akt, items, key);
+}
+
+function quelleChips(ids){
+  if(!ids.length) return '<span class="muted" style="font-size:13px">keine Datei nötig</span>';
+  return '<div class="chips">' + ids.map(q => {
+    const Q = QUELLEN[q], cls = Q.status==='fehlt'?'weg':'da';
+    return `<span class="chip ${cls}" onclick="zuDaten()" title="Zu Start → Daten einlesen">${Q.status==='fehlt'?'fehlt: ':'✓ '}${esc(Q.titel)}${Q.stand?' · '+Q.stand:''}</span>`;
+  }).join('') + '</div>';
+}
+
+function platzhalter(k, items, key){
+  const i = items.indexOf(k), vor = items[i-1], nach = items[i+1];
+  const fehlt = k.braucht.filter(q => QUELLEN[q].status==='fehlt');
+  return `<div class="card">
+    <h2><span class="num">${i+1}</span> ${esc(k.titel)}</h2>
+    <div class="meta">
+      <b>Was die Karte tut</b><span>${esc(k.was)}</span>
+      <b>Heute zu finden</b><span>${esc(k.heute)}</span>
+      <b>Braucht</b><span>${quelleChips(k.braucht)}</span>
+    </div>
+    ${fehlt.length ? `<div class="box warn">Für diesen Schritt fehlt noch eine Datei. <a href="#" onclick="zuDaten();return false">Zu „Daten einlesen“</a></div>` : ''}
+    <div class="platzhalter">Hier steht später der Inhalt der heutigen Karte – unverändert.<br>
+      <label style="display:inline-flex;gap:6px;align-items:center;margin-top:10px;cursor:pointer">
+        <input type="checkbox" ${S.erledigt.has(k.id)?'checked':''} onchange="hakeAb('${k.id}',this.checked)"> Schritt erledigt (nur zum Ausprobieren)
+      </label></div>
+    <div class="fuss">
+      <button class="btn" ${vor?'':'disabled'} onclick="wahlKarte('${key}','${vor?vor.id:''}')">← ${vor?esc(vor.titel):'zurück'}</button>
+      <button class="btn prim" ${nach?'':'disabled'} onclick="wahlKarte('${key}','${nach?nach.id:''}')">${nach?esc(nach.titel):'weiter'} →</button>
+    </div>
+  </div>`;
+}
+
+function datenKarte(){
+  const zeilen = Object.values(QUELLEN).map(Q => {
+    const st = Q.status==='ok' ? '<span class="st ok">✓ aktuell</span>'
+             : Q.status==='alt' ? '<span class="st alt">⚠ älter als 4 Wochen</span>'
+             : '<span class="st fehlt">✗ nicht gefunden</span>';
+    return `<tr><td><b>${esc(Q.titel)}</b><div class="muted" style="font-size:12px">erkannt an: ${esc(Q.erkennt)}</div></td>
+      <td>${Q.datei?`<code>${esc(Q.datei)}</code><div class="muted" style="font-size:12px">${esc(Q.zeilen)}</div>`:'–'}</td>
+      <td>${esc(Q.stand||'–')}</td><td>${st}</td>
+      <td><button class="btn" style="padding:4px 10px;font-size:12.5px">andere Datei …</button></td></tr>`;
+  }).join('');
+  return `<div class="card">
+    <h2><span class="num">D</span> Daten einlesen <span class="muted" style="font-weight:400">alle Dateien an einer Stelle</span></h2>
+    <div class="meta">
+      <b>Datenordner</b><span><code>C:\\FBG-Daten</code> · <span class="muted">nur auf diesem Rechner, nicht der gemeinsame Ordner</span></span>
+      <b>Zuletzt gelesen</b><span>09.10.2026, 08:14 Uhr</span>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+      <button class="btn prim">Ordner neu einlesen</button>
+      <button class="btn">Datenordner wählen …</button>
+    </div>
+    <table><thead><tr><th>Art</th><th>Datei (neueste)</th><th>Stand</th><th>Status</th><th></th></tr></thead><tbody>${zeilen}</tbody></table>
+    <div class="box info"><b>So funktioniert es:</b> Das Tool schaut in den Datenordner, erkennt jede Datei an ihrer Kopfzeile
+      (nicht am Dateinamen) und nimmt je Art die <b>neueste</b>. Über „andere Datei …“ kannst du für dieses eine Mal eine
+      bestimmte Datei wählen. Beim Start fragt Chrome einmal nach, ob das Tool den Ordner lesen darf.</div>
+    <div class="box warn"><b>Datenschutz:</b> Die Exporte enthalten echte Schülerdaten. Sie gehören in einen eigenen Ordner auf
+      diesem Rechner, nicht in den gemeinsamen Ordner. Dort liegt weiter nur <code>FBG_Schuljahr_Stand.json</code>.</div>
+  </div>`;
+}
+
+function heuteKarte(){
+  const fehlt = Object.values(QUELLEN).filter(q => q.status!=='ok');
+  return `<div class="card">
+    <h2><span class="num">!</span> Was jetzt ansteht</h2>
+    <div class="box info">Abgleich der Klassenverteiler ist fällig (4 Wochen nach „Verteiler versetzen“).
+      <a href="#" onclick="springe('pflege',null,'abgAnleit');return false">Zum Abgleich</a></div>
+    ${fehlt.length?`<div class="box warn">${fehlt.length} Datenquellen fehlen oder sind alt: ${fehlt.map(q=>esc(q.titel)).join(', ')}.
+      <a href="#" onclick="zuDaten();return false">Zu „Daten einlesen“</a></div>`:''}
+    <div class="platzhalter">Hier steht später die heutige Startseite mit dem Stand der Vorgänge.</div>
+  </div>`;
+}
+
+function wahlHaupt(id){ S.haupt=id; zeichne(); scrollTo({top:0}); }
+function wahlUnter(h,u){ S.unter[h]=u; zeichne(); }
+function wahlKarte(key,id){ if(!id) return; S.karte[key]=id; zeichne(); scrollTo({top:0,behavior:'smooth'}); }
+function hakeAb(id,an){ an?S.erledigt.add(id):S.erledigt.delete(id); zeichne(); }
+function springe(h,u,id){ S.haupt=h; if(u) S.unter[h]=u; const {key}=aktBereich(); S.karte[key]=id; zeichne(); }
+function zuDaten(){ springe('start',null,'daten'); }
+
+zeichne();
+</script>
+</body>
+</html>

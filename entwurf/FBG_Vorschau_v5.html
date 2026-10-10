@@ -54,7 +54,9 @@
   .hauptnav button.fertig::after{content:" ✓";color:var(--ok)}
 
   /* Ebene 2: Unterreiter, nur wo es Personengruppen gibt */
-  .unternav{max-width:1320px;margin:16px auto 0;padding:0 24px}
+  .unternav{max-width:1320px;margin:0 auto;padding:0 24px}
+  .unternav:not(:empty){padding:10px 24px;display:flex;align-items:center}
+  .unternav .wer{font-size:13px;color:var(--muted);margin-right:12px;font-weight:600}
   .seg{display:inline-flex;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:3px;flex-wrap:wrap}
   .seg button{border:0;background:transparent;padding:7px 18px;font-size:14px;cursor:pointer;
     color:var(--muted);border-radius:999px;font-family:inherit}
@@ -65,8 +67,8 @@
   .rahmen{max-width:1320px;margin:0 auto;padding:18px 24px 60px;display:grid;
     grid-template-columns:290px 1fr;gap:22px;align-items:start}
   .rahmen.ohneLeiste{grid-template-columns:1fr}
-  aside{position:sticky;top:134px;background:var(--card);border:1px solid var(--line);
-    border-radius:var(--radius);padding:10px 8px;box-shadow:var(--shadow);max-height:calc(100vh - 150px);overflow:auto}
+  aside{position:sticky;top:var(--kopf,134px);background:var(--card);border:1px solid var(--line);
+    border-radius:var(--radius);padding:10px 8px;box-shadow:var(--shadow);max-height:calc(100vh - var(--kopf,134px) - 16px);overflow:auto}
   .grp{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);
     padding:12px 10px 4px}
   .grp:first-child{padding-top:4px}
@@ -110,6 +112,18 @@
   .st.ok{color:var(--ok)} .st.alt{color:var(--warn)} .st.fehlt{color:var(--err)}
   code{font-family:ui-monospace,Consolas,monospace;font-size:12.5px;background:var(--panel);padding:1px 5px;border-radius:5px}
 
+  /* Schrittkopf: Anleitung aus SCHRITTE direkt an der Karte */
+  .schritt{background:var(--accent-soft);border-radius:var(--radius-sm);padding:10px 14px;margin:-4px 0 14px;font-size:13.5px}
+  .skopf{display:flex;gap:12px;align-items:baseline;flex-wrap:wrap}
+  .skopf .dauer{font-weight:650;white-space:nowrap;color:var(--accent)}
+  .skopf span:nth-child(2){flex:1;min-width:240px}
+  .hkl{margin-left:auto;display:inline-flex;gap:6px;align-items:center;cursor:pointer;font-size:13px;color:var(--ink-2);font-weight:600}
+  .schritt > .hkl{float:right}
+  .anl{margin-top:6px}
+  .anl summary{cursor:pointer;font-weight:600;font-size:13px;color:var(--ink-2)}
+  .anl ol{margin:6px 0 2px;padding-left:22px} .anl p{margin:6px 0 2px}
+  .anl textarea{width:100%;min-height:60px;margin-top:6px;padding:8px;border:1px solid var(--line-2);border-radius:8px;
+    font-family:inherit;font-size:13px;background:var(--card);color:var(--ink)}
   /* Etiketten für die Zielsysteme */
   .sys{margin-left:auto;font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:5px;
     background:var(--panel);border:1px solid var(--line);color:var(--muted);white-space:nowrap}
@@ -137,8 +151,8 @@
   <div class="suchbox"><input type="text" placeholder="Suchen: Vorgang, Schritt, Karte …" disabled></div>
   <span class="entwurf">Entwurf</span>
 </div>
-<nav class="hauptnav"><div class="innen" id="hauptnav"></div></nav></header>
-<div class="unternav" id="unternav"></div>
+<nav class="hauptnav"><div class="innen" id="hauptnav"></div></nav>
+<div class="unternav" id="unternav"></div></header>
 <div class="rahmen" id="rahmen">
   <aside id="leiste"></aside>
   <section>
@@ -181,10 +195,10 @@ const LEHRKRAFT = (wer) => [
     K('vorschau','Daten prüfen und Vorschau','','Reiter 1, Karten 3 und 4',wer+' aus dem SchILD-Export, mit Warnungen.',['schildL']),
   ]},
   {grp:'Anlegen', items:[
-    K('ms365','Konten anlegen (Skript)','MS365','Reiter 1, Karte 5','Konten, Lizenzen, Verteiler, Teams.',['schildL']),
+    K('ms365','MS365 Benutzer anlegen','MS365','Reiter 1, Karte 5','Konten, Lizenzen, Verteiler, Teams.',['schildL']),
     W('postfach','Postfächer abwarten','15 Minuten bis 1 Stunde, dann stichprobenartig prüfen.'),
-    K('jamf','Jamf-CSV','Jamf','Reiter 1, Karte 5','Benutzerimport für Jamf School.',['schildL']),
-    K('iserv','IServ-CSV','IServ','Reiter 1, Karte 5','Vollimport in IServ.',['schildL']),
+    K('jamf','Jamf Benutzer anlegen','Jamf','Reiter 1, Karte 5','Benutzerimport für Jamf School.',['schildL']),
+    K('iserv','IServ Benutzer anlegen','IServ','Reiter 1, Karte 5','Vollimport in IServ.',['schildL']),
   ]},
   {grp:'Abschluss', items:[
     K('briefe','Briefe und Mailtexte','','Reiter 1, Karte 6','Zugangsdaten zum Übergeben.',['schildL']),
@@ -207,19 +221,18 @@ const NAV = [
      K('voraus','Einmalige Voraussetzungen','','Reiter 0, Karte gleichen Namens','Nur beim ersten Mal auf einem Rechner.'),
    ]},
  ]},
- {id:'zugang', titel:'Zugänge anlegen', unter:[
+ {id:'zugang', titel:'Benutzer anlegen', unter:[
    {id:'schueler', titel:'Schüler', leiste:[
      {grp:'Vorbereitung', items:[
        K('sichern','Kontenbestand sichern','MS365','Reiter 1, Karte 1','Den Ist-Zustand der Konten wegschreiben, bevor etwas geändert wird.'),
        K('vorschau','Daten prüfen und Vorschau','','Reiter 1, Karten 3 und 4','Zeigt die Schüler aus dem SchILD-Export, mit Warnungen.',['schildS']),
      ]},
      {grp:'Anlegen', items:[
-       K('ms365','Konten anlegen (Skript)','MS365','Reiter 1, Karte 5, Abschnitt PowerShell','Das PowerShell-Skript für Konten und Lizenzen.',['schildS']),
+       K('ms365','MS365 Benutzer anlegen','MS365','Reiter 1, Karte 5, Abschnitt PowerShell','Das PowerShell-Skript für Konten und Lizenzen.',['schildS']),
        W('postfach','Postfächer abwarten','15 Minuten bis 1 Stunde. Erst dann gehen Verteiler.'),
        K('klFuellen','Klassenverteiler füllen','MS365','Reiter 2, Karte 6','Neue Klassen anlegen und Schüler aufnehmen.',['schildS']),
-       K('jamfNamen','Jamf-Benutzernamen übernehmen','Jamf','Reiter 1, Karte 4, Jamf-Abgleich','Vorhandene Jamf-Namen statt neu gebildeter.',['jamfS','konten']),
-       K('jamf','Jamf-CSV','Jamf','Reiter 1, Karte 5, Abschnitt Jamf','Benutzerimport, ersetzt Klassen und Gruppen.',['schildS']),
-       K('iserv','IServ-CSV','IServ','Reiter 1, Karte 5, Abschnitt IServ','Vollimport, überschreibt die Klassen.',['schildS']),
+       K('jamf','Jamf Benutzer anlegen','Jamf','Reiter 1, Karte 5, Abschnitt Jamf','Benutzerimport, ersetzt Klassen und Gruppen. Darin aufgeklappt: Jamf-Benutzernamen abgleichen (nur bei Bedarf).',['schildS']),
+       K('iserv','IServ Benutzer anlegen','IServ','Reiter 1, Karte 5, Abschnitt IServ','Vollimport, überschreibt die Klassen.',['schildS']),
        K('wui','Office-365-Identität nachtragen','WebUntis','Werkzeugkasten, Karte 4','Damit die Anmeldung per SSO läuft.',['untis','konten']),
      ]},
      {grp:'Abschluss', items:[
@@ -236,7 +249,7 @@ const NAV = [
    {id:'prak', titel:'Praktikanten', leiste:[
      {grp:'Aufnehmen', items:[
        K('prakNamen','Namen eintragen','','Reiter 1, Bereich Praktikum','Kohorte, Namen, Enddatum. Kommt nicht aus SchILD.'),
-       K('ms365','Konten anlegen (Skript)','MS365','Reiter 1, Karte 5','Befristete MS365-Konten mit Kennung PRAKT-….'),
+       K('ms365','MS365 Benutzer anlegen','MS365','Reiter 1, Karte 5','Befristete MS365-Konten mit Kennung PRAKT-….'),
        K('prakVert','Kollegiumsverteiler','MS365','Reiter 1, Karte 5','Aufnahme in den Verteiler. Erst wenn das Postfach da ist.'),
        K('prakUntis','WebUntis-Benutzer (CSV)','WebUntis','Reiter 1, Karte 5','Import mit Benutzergruppe und Office-365-Identität.'),
        K('briefe','Zugangsdaten übergeben','','Reiter 1, Karte 6','Brief oder Mailtext.'),
@@ -256,12 +269,12 @@ const NAV = [
      K('leitung','Klassenleitungen aktualisieren','MS365','Reiter 2, Karte L','Nach dem Versetzen.',['schildL']),
    ]},
    {grp:'Sommer: neue Schüler', items:[
-     L('zuSchueler','Neue Schüler anlegen','Zugänge anlegen → Schüler','Konten, Klassenverteiler, Jamf, IServ, Briefe.'),
+     L('zuSchueler','Neue Schüler anlegen','Benutzer anlegen → Schüler','Konten, Klassenverteiler, Jamf, IServ, Briefe.'),
      W('abgaenge','Abgänge behandeln','Admin Center oder PowerShell.'),
      K('nachlauf','Nachlauf','','Werkzeugkasten, Karte 1','Kontrollbefehle und Aufräumen.'),
    ]},
    {grp:'Herbst: Oberstufenkurse', items:[
-     L('zuJamfNamen','Jamf-Benutzernamen übernehmen','Zugänge anlegen → Schüler','Falls noch nicht geschehen.'),
+     L('zuJamfNamen','Jamf-Benutzernamen abgleichen','Benutzer anlegen → Schüler','Steckt in „Jamf Benutzer anlegen“, Abschnitt zum Aufklappen.'),
      K('ep','Kursdaten laden und nach Jamf','Jamf','Reiter 1, Kursdaten (Ibiza)','Kursgruppen EP_… aus dem Ibiza-Export.',['ibiza']),
      W('migrieren','Gruppen zu Klassen migrieren','In Jamf School, von Hand.'),
      W('asm','Auf Apple School Manager warten','Bis zum nächsten Tag, dann Classroom prüfen.'),
@@ -291,6 +304,25 @@ const NAV = [
  ]},
 ];
 
+/* ---------- Anleitung je Karte: kommt im echten Tool aus SCHRITTE ----------
+   Beispieltexte, gekürzt. dauer, zweck, anleitung[] und warum wie in SCHRITTE. */
+const ANL = {
+  ms365:   {dauer:'30 Minuten', zweck:'Aus dem SchILD-Export entstehen Adressen und Passwörter, das Skript legt die Konten in MS365 an und weist die Lizenzen zu.',
+            schritte:['SchILD-Export laden (Start → Daten einlesen).','Vorschau und Warnungen durchsehen.','Skript herunterladen und in PowerShell 7 ohne Parameter starten: nur Simulation.','Läuft alles sauber: noch einmal mit -Live starten.'],
+            warum:'Die Grundlizenz muss Exchange enthalten, sonst entsteht kein Postfach und die Kinder lassen sich später nicht in die Klassenverteiler aufnehmen.'},
+  postfach:{dauer:'15 Minuten bis 1 Stunde', zweck:'Erst wenn die Postfächer da sind, lassen sich die Konten in Verteiler aufnehmen.',
+            schritte:['Zwei, drei neue Adressen im Admin Center aufrufen.','Hat jede ein Postfach: weiter mit dem nächsten Schritt.']},
+  jamf:    {dauer:'10 Minuten', zweck:'Legt die Benutzer in Jamf School an und setzt dabei Klassen und Gruppen neu.',
+            schritte:['Jamf-Datei herunterladen.','Jamf School → Benutzer → Import.','Immer alle Jahrgänge importieren, nie nur die neuen.'],
+            warum:'Der Import ersetzt die Gruppen aller Personen, die in der Datei stehen. Wer fehlt, behält seine alten Gruppen.'},
+  iserv:   {dauer:'10 Minuten', zweck:'Legt die Benutzer in IServ an und setzt die Klassen.',
+            schritte:['IServ-Datei herunterladen (.csv).','IServ → Verwaltung → Import, Profil wählen.','Als Vollimport starten.']},
+  abgLesen:{dauer:'5 Minuten', zweck:'Holt den Ist-Zustand aus MS365 und Exchange.',
+            schritte:['Fenster 1 (Graph): Befehl kopieren und starten.','Fenster 2 (Exchange): Befehl kopieren und starten.','Beide Dateien landen im Download-Ordner.']},
+  prakNamen:{dauer:'5 Minuten', zweck:'Die Praktikanten kommen nicht aus SchILD, sie werden hier eingetragen.',
+            schritte:['Kohorte wählen, z. B. 2026-2.','Namen und Enddatum eintragen.','Vorschau prüfen.']},
+};
+
 /* ---------- Zustand der Vorschau ---------- */
 const S = {haupt:'start', unter:{zugang:'schueler'}, erledigt:new Set(['vsichern','zuordnung','pruefung','skript'])};
 const $ = id => document.getElementById(id);
@@ -304,13 +336,17 @@ function aktBereich(){
 const alleItems = b => b.leiste.flatMap(g => g.items);
 const sysTag = s => s ? `<span class="sys sys-${s}">${esc(s)}</span>` : '';
 
+function kopfHoehe(){
+  const h = document.querySelector('header').offsetHeight + 14;
+  document.documentElement.style.setProperty('--kopf', h+'px'); return h;
+}
 function zeichne(){
   $('hauptnav').innerHTML = NAV.map(n =>
     `<button class="${n.id===S.haupt?'aktiv':''}" onclick="wahlHaupt('${n.id}')">${esc(n.titel)}</button>`).join('');
 
   const {h, b} = aktBereich();
   $('unternav').innerHTML = h.unter
-    ? `<div class="seg">${h.unter.map(u => `<button class="${u===b?'aktiv':''}" onclick="wahlUnter('${h.id}','${u.id}')">${esc(u.titel)}</button>`).join('')}</div>`
+    ? `<span class="wer">Du arbeitest an:</span><div class="seg">${h.unter.map(u => `<button class="${u===b?'aktiv':''}" onclick="wahlUnter('${h.id}','${u.id}')">${esc(u.titel)}</button>`).join('')}</div>`
       + (b.hinweis ? `<span class="muted" style="font-size:13px;margin-left:12px">${esc(b.hinweis)}</span>` : '')
     : '';
 
@@ -330,7 +366,7 @@ function zeichne(){
   // Inhalt: alle Karten untereinander
   $('inhalt').innerHTML = b.leiste.map(g =>
     `<div class="gruppe">${esc(g.grp)}</div>` + g.items.map(karte).join('')).join('');
-  beobachte();
+  kopfHoehe(); beobachte();
 }
 
 function quelleChips(ids){
@@ -341,8 +377,22 @@ function quelleChips(ids){
   }).join('') + '</div>';
 }
 
+function schrittKopf(k){
+  const a = ANL[k.id];
+  const haken = `<label class="hkl"><input type="checkbox" ${S.erledigt.has(k.id)?'checked':''} onchange="hakeAb('${k.id}',this.checked)"> erledigt</label>`;
+  if(!a) return `<div class="schritt"><span class="muted">Zu diesem Schritt gibt es noch keine Anleitung.</span>${haken}</div>`;
+  return `<div class="schritt">
+      <div class="skopf"><span class="dauer">⏱ ${esc(a.dauer)}</span><span>${esc(a.zweck)}</span>${haken}</div>
+      ${a.schritte?`<details class="anl"><summary>Anleitung · ${a.schritte.length} Schritte</summary><ol>${a.schritte.map(x=>'<li>'+esc(x)+'</li>').join('')}</ol></details>`:''}
+      ${a.warum?`<details class="anl"><summary>Warum das so ist</summary><p>${esc(a.warum)}</p></details>`:''}
+      <details class="anl"><summary>Notiz</summary><textarea placeholder="Eigene Notiz zu diesem Schritt (wird im Stand gespeichert)"></textarea></details>
+    </div>`;
+}
+
 function karte(k){
-  if(k.art==='warten') return `<div class="warte" id="k_${k.id}"><span class="sym">⏳</span><b>${esc(k.titel)}</b> <span class="muted">${esc(k.was)}</span></div>`;
+  if(k.art==='warten') return `<div class="warte" id="k_${k.id}"><span class="sym">⏳</span><b>${esc(k.titel)}</b> <span class="muted">${esc(k.was)}</span>`
+    + (ANL[k.id]?`<details class="anl" style="flex-basis:100%;margin:4px 0 0 26px"><summary>Anleitung · ${ANL[k.id].schritte.length} Schritte</summary><ol>${ANL[k.id].schritte.map(x=>'<li>'+esc(x)+'</li>').join('')}</ol></details>`:'')
+    + `</div>`;
   if(k.art==='link')   return `<div class="warte link" id="k_${k.id}"><span class="sym">↗</span><b>${esc(k.titel)}</b> <span class="muted">${esc(k.was)}</span>
                                  <button class="btn" style="margin-left:auto" onclick="folgeLink('${k.id}')">Zu ${esc(k.ziel)}</button></div>`;
   if(k.id==='daten') return datenKarte(k);
@@ -350,16 +400,14 @@ function karte(k){
   const fehlt = k.braucht.filter(q => QUELLEN[q].status==='fehlt');
   return `<div class="card" id="k_${k.id}">
     <h2><span class="num">${k.nr}</span> ${esc(k.titel)} ${sysTag(k.sys)}</h2>
+    ${schrittKopf(k)}
     <div class="meta">
       <b>Was die Karte tut</b><span>${esc(k.was)}</span>
       <b>Heute zu finden</b><span>${esc(k.heute)}</span>
       <b>Braucht</b><span>${quelleChips(k.braucht)}</span>
     </div>
     ${fehlt.length ? `<div class="box warn">Für diesen Schritt fehlt noch eine Datei. <a href="#" onclick="zuDaten();return false">Zu „Daten einlesen“</a></div>` : ''}
-    <div class="platzhalter">Hier steht später der Inhalt der heutigen Karte, unverändert.<br>
-      <label style="display:inline-flex;gap:6px;align-items:center;margin-top:10px;cursor:pointer">
-        <input type="checkbox" ${S.erledigt.has(k.id)?'checked':''} onchange="hakeAb('${k.id}',this.checked)"> Schritt erledigt (nur zum Ausprobieren)
-      </label></div>
+    <div class="platzhalter">Hier steht später der Inhalt der heutigen Karte, unverändert.</div>
   </div>`;
 }
 
@@ -413,7 +461,7 @@ function beobachte(){
   beob = new IntersectionObserver(es => {
     const sicht = es.filter(e => e.isIntersecting).sort((a,b) => a.boundingClientRect.top-b.boundingClientRect.top);
     if(sicht.length && Date.now()>sperre) marke(sicht[0].target.id);
-  }, {rootMargin:'-140px 0px -60% 0px'});
+  }, {rootMargin:'-'+kopfHoehe()+'px 0px -60% 0px'});
   document.querySelectorAll('#inhalt [id^="k_"]').forEach(el => beob.observe(el));
   const erste = document.querySelector('#inhalt [id^="k_"]'); if(erste) marke(erste.id);
 }
@@ -421,14 +469,14 @@ function beobachte(){
 function springeKarte(id){
   const el = $('k_'+id); if(!el) return;
   marke('k_'+id); sperre = Date.now()+1000;   // beim Klick gewinnt der Klick, auch bei der letzten Karte
-  scrollTo({top: el.getBoundingClientRect().top + scrollY - 140, behavior:'smooth'});
+  scrollTo({top: el.getBoundingClientRect().top + scrollY - kopfHoehe(), behavior:'smooth'});
   el.classList.add('blink'); setTimeout(() => el.classList.remove('blink'), 1200);
 }
 function wahlHaupt(id){ S.haupt=id; zeichne(); scrollTo({top:0}); }
 function wahlUnter(h,u){ S.unter[h]=u; zeichne(); scrollTo({top:0}); }
 function hakeAb(id,an){ an?S.erledigt.add(id):S.erledigt.delete(id); const y=scrollY; zeichne(); scrollTo({top:y}); }
 function springe(h,u,id){ S.haupt=h; if(u) S.unter[h]=u; zeichne(); setTimeout(() => springeKarte(id), 30); }
-function folgeLink(id){ springe('zugang','schueler', id==='zuJamfNamen'?'jamfNamen':'sichern'); }
+function folgeLink(id){ springe('zugang','schueler', id==='zuJamfNamen'?'jamf':'sichern'); }
 function zuDaten(){ springe('start',null,'daten'); }
 
 zeichne();
